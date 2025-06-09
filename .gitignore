@@ -1,0 +1,54 @@
+# === ESP-IDF build ===
+/build/
+/bootloader/
+/bootloader-prefix/
+/CMakeFiles/
+/CMakeCache.txt
+/build.ninja
+/cmake_install.cmake
+/compile_commands.json
+/project_description.json
+/dependencies.lock
+/.python_env/
+
+# === ESP-IDF auto-generated args ===
+/app-flash_args
+/bootloader-flash_args
+/flash_app_args
+/flash_args
+/flash_args.in
+/flash_bootloader_args
+/flash_project_args
+/flasher_args.json
+/partition-table-flash_args
+/kconfigs.in
+/kconfig.projbuild.in
+
+# === SDK config (optional) ===
+#/sdkconfig
+/sdkconfig.old
+
+# === VSCode ===
+.vscode/
+/*.code-workspace
+
+# === Logs, temps ===
+*.log
+*.tmp
+
+# === Core dumps ===
+core*
+
+# === Editor backup/swap files ===
+*~
+*.bak
+*.swp
+*.swo
+*.swn
+
+# === macOS / Windows system files ===
+.DS_Store
+Thumbs.db
+
+ldgen*
+kconfig*
