@@ -100,6 +100,11 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
     }
 
     victronManufacturerData *mdata = (void*)fields.mfg_data;
+
+    // Log raw manufacturer data
+    ESP_LOGI(TAG, "Received manufacturer data (len=%d):", fields.mfg_data_len);
+    ESP_LOG_BUFFER_HEX(TAG, fields.mfg_data, fields.mfg_data_len);  // ADDED LOGGING
+
     if (mdata->vendorID != 0x02e1 ||
         mdata->victronRecordType != 0x01 ||
         mdata->encryptKeyMatch != aes_key[0])
@@ -113,6 +118,10 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
     uint8_t output[32] = {0};
     memcpy(input, mdata->victronEncryptedData, encr_size);
 
+    // Log encrypted data
+    ESP_LOGI(TAG, "Encrypted Victron data:");
+    ESP_LOG_BUFFER_HEX(TAG, input, encr_size);  // ADDED LOGGING
+
     esp_aes_context ctx;
     esp_aes_init(&ctx);
     if (esp_aes_setkey(&ctx, aes_key, 128) != 0) {
@@ -120,6 +129,7 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
         esp_aes_free(&ctx);
         return 0;
     }
+
     uint16_t nonce = mdata->nonceDataCounter;
     uint8_t ctr_blk[16] = { nonce & 0xFF, (nonce >> 8) & 0xFF };
     uint8_t stream_block[16] = {0};
@@ -133,6 +143,10 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
         return 0;
     }
 
+    // Log decrypted payload
+    ESP_LOGI(TAG, "Decrypted Victron data (nonce=%04X):", nonce);  // ADDED LOGGING
+    ESP_LOG_BUFFER_HEX(TAG, output, encr_size);  // ADDED LOGGING
+
     victronPanelData_t panel;
     memcpy(&panel, output, sizeof(panel));
     if ((panel.outputCurrentHi & 0xFE) != 0xFE) {
@@ -145,3 +159,4 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
 
     return 0;
 }
+

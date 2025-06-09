@@ -143,6 +143,17 @@ static void on_panel_data(const victronPanelData_t *d) {
     uint32_t yieldWh = (uint32_t)(d->todayYield * 0.01f * 1000.0f);
     uint32_t loadWatt = ((loadRaw * battVraw) / 1000);  // Watts = A * V
 
+    // --- ADDED LOGGING ---
+    ESP_LOGI("victron_data", "Battery: %d.%02d V, %d.%1d A (raw: %d cV, %d dA)",
+             battV_i, battV_f, battA_i, battA_f, battVraw, battAraw);
+    ESP_LOGI("victron_data", "Load: %d.%1d A (raw: %d dA), approx. %lu W",
+             load_i, load_f, loadRaw, loadWatt);
+    ESP_LOGI("victron_data", "Solar input: %lu W, Yield today: %lu Wh",
+             solarW, yieldWh);
+    ESP_LOGI("victron_data", "Device state: %s, Error: %s",
+             charger_state_str(d->deviceState), err_str(d->errorCode));
+    // ---------------------
+
     lv_label_set_text_fmt(lbl_load_watt, "Load: %lu W", loadWatt);
 
     lv_label_set_text_fmt(lbl_battV, "%d.%02d V", battV_i, battV_f);
@@ -154,6 +165,7 @@ static void on_panel_data(const victronPanelData_t *d) {
     lv_label_set_text_fmt(lbl_state, "State: %s", charger_state_str(d->deviceState));
     lv_label_set_text_fmt(lbl_error, "%s",    err_str(d->errorCode));
 }
+
 
 
 static void setup(void);
