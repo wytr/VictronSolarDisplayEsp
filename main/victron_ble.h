@@ -1,9 +1,7 @@
-// victron_ble.h
 #ifndef VICTRON_BLE_H
 #define VICTRON_BLE_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
