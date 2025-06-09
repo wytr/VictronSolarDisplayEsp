@@ -21,6 +21,8 @@ static lv_style_t style_title, style_val;
 static lv_obj_t *lbl_battV, *lbl_battA, *lbl_loadA;
 static lv_obj_t *lbl_solar, *lbl_yield, *lbl_state, *lbl_error;
 static lv_obj_t *ta_mac, *ta_key;
+static lv_obj_t *lbl_load_watt;
+
 
 // Text‐area event callback to bind/unbind the keyboard
 static void ta_event_cb(lv_event_t *e) {
@@ -139,6 +141,9 @@ static void on_panel_data(const victronPanelData_t *d) {
 
     uint32_t solarW  = d->inputPower;
     uint32_t yieldWh = (uint32_t)(d->todayYield * 0.01f * 1000.0f);
+    uint32_t loadWatt = ((loadRaw * battVraw) / 1000);  // Watts = A * V
+
+    lv_label_set_text_fmt(lbl_load_watt, "Load: %lu W", loadWatt);
 
     lv_label_set_text_fmt(lbl_battV, "%d.%02d V", battV_i, battV_f);
     lv_label_set_text_fmt(lbl_battA, "%d.%1d A", battA_i, battA_f);
@@ -240,7 +245,7 @@ void setup(void) {
 
     // 5) Live → horizontal row of three boxes
     lv_obj_t *row = lv_obj_create(tab_live);
-    lv_obj_set_size(row, lv_pct(100), 150);
+    lv_obj_set_size(row, lv_pct(100), 120);
     lv_obj_set_flex_flow(row, LV_STYLE_PAD_ROW);
     lv_obj_set_flex_align(
       row,
@@ -271,28 +276,32 @@ void setup(void) {
     NEW_BOX("Batt A", "0.0 A",  &lbl_battA);
     NEW_BOX("Load A", "0.0 A", &lbl_loadA);
 
-    // Solar / Yield / State / Error at bottom
     lbl_solar = lv_label_create(tab_live);
     lv_obj_add_style(lbl_solar, &style_title, 0);
     lv_label_set_text(lbl_solar, "Solar: 0 W");
-    lv_obj_align(lbl_solar, LV_ALIGN_BOTTOM_LEFT,  8, -8);
+    lv_obj_align(lbl_solar, LV_ALIGN_BOTTOM_LEFT, 8, -8);
 
     lbl_yield = lv_label_create(tab_live);
     lv_obj_add_style(lbl_yield, &style_title, 0);
     lv_label_set_text(lbl_yield, "Yield: 0 Wh");
-    lv_obj_align(lbl_yield, LV_ALIGN_BOTTOM_MID,    0, -8);
+    lv_obj_align(lbl_yield, LV_ALIGN_BOTTOM_MID, 0, -8);
 
-    lbl_state = lv_label_create(tab_live);
-    lv_obj_add_style(lbl_state, &style_title, 0);
-    lv_label_set_text(lbl_state, "State: 0");
-    lv_obj_align(lbl_state, LV_ALIGN_BOTTOM_RIGHT, -8, -8);
+    lbl_load_watt = lv_label_create(tab_live);
+    lv_obj_add_style(lbl_load_watt, &style_title, 0);
+    lv_label_set_text(lbl_load_watt, "Load: 0 W");
+    lv_obj_align(lbl_load_watt, LV_ALIGN_BOTTOM_RIGHT, -8, -8);
 
-    lbl_error = lv_label_create(tab_live);
-    lv_obj_add_style(lbl_error, &style_title, 0);
-    lv_label_set_text(lbl_error, "Err: 0");
-    lv_obj_align(lbl_error, LV_ALIGN_BOTTOM_RIGHT, -8, -28);
 
     // 6) Info tab: MAC and AES‐key text areas
+    lbl_state = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_state, &style_title, 0);
+    lv_label_set_text(lbl_state, "State: 0");
+    lv_obj_align(lbl_state, LV_ALIGN_BOTTOM_LEFT, 8, -48);
+
+    lbl_error = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_error, &style_title, 0);
+    lv_label_set_text(lbl_error, "Err: 0");
+    lv_obj_align(lbl_error, LV_ALIGN_BOTTOM_LEFT, 8, -24);
     lv_obj_t *lmac = lv_label_create(tab_info);
     lv_obj_add_style(lmac, &style_title, 0);
     lv_label_set_text(lmac, "MAC Address:");
