@@ -1,3 +1,4 @@
+// victron_ble.h
 #ifndef VICTRON_BLE_H
 #define VICTRON_BLE_H
 
@@ -7,24 +8,32 @@
 extern "C" {
 #endif
 
-/**
- * @brief Initialize BLE scanning and decryption for Victron SmartSolar beacons
- */
+// Parsed Victron panel data
+typedef struct {
+    uint8_t  deviceState;
+    uint8_t  errorCode;
+    int16_t  batteryVoltage;    // centi-volts
+    int16_t  batteryCurrent;    // deci-amps
+    uint16_t todayYield;        // centi-amp-hours
+    uint16_t inputPower;        // watts
+    uint8_t  outputCurrentLo;   // low 8 bits of 9-bit load current
+    uint8_t  outputCurrentHi;   // msb + unused bits
+    uint8_t  unused[4];
+} victronPanelData_t;
+
+// Callback for receiving new panel data
+typedef void (*victron_data_cb_t)(const victronPanelData_t* data);
+
+// Initialize BLE scanning and decryption for Victron SmartSolar
 void victron_ble_init(void);
 
-/**
- * Shared data updated by BLE callbacks
- */
-extern float batVol;
-extern float powIn;
-extern int readings;
-extern long nread;
-extern int yeTod;
-extern int deState;
-extern char savedDeviceName[32];
+// Register a callback to be invoked with each decrypted victronPanelData_t
+void victron_ble_register_callback(victron_data_cb_t cb);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif // VICTRON_BLE_H
+
+
