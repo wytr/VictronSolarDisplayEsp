@@ -92,8 +92,8 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
         return 0;
     }
     victronManufacturerData *mdata = (void*)fields.mfg_data;
-    ESP_LOGV(TAG, "Received mfg data len=%d", fields.mfg_data_len);
-    ESP_LOG_BUFFER_HEX(TAG, fields.mfg_data, fields.mfg_data_len);
+    //ESP_LOGV(TAG, "Received mfg data len=%d", fields.mfg_data_len);
+    //ESP_LOG_BUFFER_HEX(TAG, fields.mfg_data, fields.mfg_data_len);
 
     if (mdata->vendorID != 0x02e1 ||
         mdata->victronRecordType != 0x01 ||
@@ -104,8 +104,8 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
     int encr_size = fields.mfg_data_len - offsetof(victronManufacturerData, victronEncryptedData);
     uint8_t input[32] = {0}, output[32] = {0};
     memcpy(input, mdata->victronEncryptedData, encr_size);
-    ESP_LOGV(TAG, "Encrypted data:");
-    ESP_LOG_BUFFER_HEX(TAG, input, encr_size);
+    //ESP_LOGV(TAG, "Encrypted data:");
+    //ESP_LOG_BUFFER_HEX(TAG, input, encr_size);
 
     esp_aes_context ctx;
     esp_aes_init(&ctx);
@@ -119,8 +119,8 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
     esp_aes_free(&ctx);
     if (rc) { ESP_LOGE(TAG, "AES CTR decrypt failed"); return 0; }
 
-    ESP_LOGV(TAG, "Decrypted payload (nonce=0x%04X):", nonce);
-    ESP_LOG_BUFFER_HEX(TAG, output, encr_size);
+    //ESP_LOGV(TAG, "Decrypted payload (nonce=0x%04X):", nonce);
+    //ESP_LOG_BUFFER_HEX(TAG, output, encr_size);
 
     victronPanelData_t panel;
     memcpy(&panel, output, sizeof(panel));

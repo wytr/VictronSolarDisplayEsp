@@ -30,7 +30,7 @@ static void ta_event_cb(lv_event_t *e);
 static void brightness_slider_event_cb(lv_event_t *e);
 
 void ui_init(void) {
-    ESP_LOGI(TAG_UI, "Initializing UI...");
+    //ESP_LOGI(TAG_UI, "Initializing UI...");
 
     // Dark theme initialization
 #if LV_USE_THEME_DEFAULT
@@ -176,7 +176,7 @@ void ui_init(void) {
     lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
     lvgl_port_unlock();
-    ESP_LOGI(TAG_UI, "UI Initialized");
+    //ESP_LOGI(TAG_UI, "UI Initialized");
 }
 
 void ui_on_panel_data(const victronPanelData_t *d) {
@@ -196,14 +196,14 @@ void ui_on_panel_data(const victronPanelData_t *d) {
     uint32_t yieldWh = (uint32_t)(d->todayYield * 0.01f * 1000.0f);
     uint32_t loadWatt = ((loadRaw * battVraw) / 1000);
 
-    ESP_LOGI(TAG_UI, "Battery: %d.%02d V, %d.%1d A (raw: %d cV, %d dA)",
-             battV_i, battV_f, battA_i, battA_f, battVraw, battAraw);
-    ESP_LOGI(TAG_UI, "Load: %d.%1d A (raw: %d dA), approx. %lu W",
-             load_i, load_f, loadRaw, loadWatt);
-    ESP_LOGI(TAG_UI, "Solar input: %lu W, Yield today: %lu Wh",
-             solarW, yieldWh);
-    ESP_LOGI(TAG_UI, "Device state: %s, Error: %s",
-             charger_state_str(d->deviceState), err_str(d->errorCode));
+    //ESP_LOGI(TAG_UI, "Battery: %d.%02d V, %d.%1d A (raw: %d cV, %d dA)",
+    //         battV_i, battV_f, battA_i, battA_f, battVraw, battAraw);
+    //ESP_LOGI(TAG_UI, "Load: %d.%1d A (raw: %d dA), approx. %lu W",
+    //         load_i, load_f, loadRaw, loadWatt);
+    //ESP_LOGI(TAG_UI, "Solar input: %lu W, Yield today: %lu Wh",
+    //         solarW, yieldWh);
+    //ESP_LOGI(TAG_UI, "Device state: %s, Error: %s",
+    //         charger_state_str(d->deviceState), err_str(d->errorCode));
 
     lv_label_set_text_fmt(lbl_battV, "%d.%02d V", battV_i, battV_f);
     lv_label_set_text_fmt(lbl_battA, "%d.%1d A", battA_i, battA_f);
@@ -275,28 +275,28 @@ static void ta_event_cb(lv_event_t *e) {
     lv_obj_t *ta = lv_event_get_target(e);
     switch (code) {
         case LV_EVENT_FOCUSED:
-            ESP_LOGI(TAG_UI, "TextArea focused");
+            //ESP_LOGI(TAG_UI, "TextArea focused");
             lv_keyboard_set_textarea(kb, ta);
             lv_obj_move_foreground(kb);
             lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
             break;
         case LV_EVENT_DEFOCUSED:
-            ESP_LOGI(TAG_UI, "TextArea defocused");
+            //ESP_LOGI(TAG_UI, "TextArea defocused");
             lv_keyboard_set_textarea(kb, NULL);
             lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
             break;
         case LV_EVENT_CANCEL:
-            ESP_LOGI(TAG_UI, "Keyboard cancel event");
+            //ESP_LOGI(TAG_UI, "Keyboard cancel event");
             lv_keyboard_set_textarea(kb, NULL);
             lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
             break;
         case LV_EVENT_READY:
-            ESP_LOGI(TAG_UI, "Keyboard ready event");
+            //ESP_LOGI(TAG_UI, "Keyboard ready event");
             lv_keyboard_set_textarea(kb, NULL);
             lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
             break;
         default:
-            ESP_LOGI(TAG_UI, "Unhandled event: %d", code);
+            //ESP_LOGI(TAG_UI, "Unhandled event: %d", code);
             break;
     }
 }
