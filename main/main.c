@@ -118,6 +118,13 @@ const char *charger_state_str(uint8_t s) {
     }
 }
 
+static void brightness_slider_event_cb(lv_event_t *e) {
+    lv_obj_t *slider = lv_event_get_target(e);
+    int val = lv_slider_get_value(slider);
+    bsp_display_brightness_set(val);
+    ESP_LOGI(TAG, "Brightness set to %d", val);
+}
+
 
 // BLE data callback
 static void on_panel_data(const victronPanelData_t *d) {
@@ -215,8 +222,7 @@ void setup(void) {
 #endif
     };
     bsp_display_start_with_config(&cfg);
-    bsp_display_backlight_on();
-
+    bsp_display_brightness_set(5);
     logSection("Create UI");
     lvgl_port_lock(0);
 
@@ -234,14 +240,14 @@ void setup(void) {
 
     // 3) Tabview
     tabview  = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 40);
-    lv_obj_clear_flag(tabview,LV_OBJ_FLAG_SCROLL_CHAIN_HOR);
     tab_live = lv_tabview_add_tab(tabview, "Live");
     tab_info = lv_tabview_add_tab(tabview, "Info");
     lv_obj_t *content = lv_tabview_get_content(tabview);
-    lv_obj_clear_flag(content, LV_OBJ_FLAG_SCROLL_CHAIN_HOR);
-    lv_obj_clear_flag(content, LV_OBJ_FLAG_SCROLLABLE);
+
     kb = lv_keyboard_create(tab_info);
     lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(kb, LV_OBJ_FLAG_SCROLL_CHAIN_HOR);
+    lv_obj_clear_flag(kb, LV_OBJ_FLAG_SCROLLABLE);
     // 4) Styles
     lv_style_init(&style_title);
     lv_style_set_text_font(&style_title, &lv_font_montserrat_16);
@@ -261,8 +267,10 @@ void setup(void) {
 
     // 5) Live → horizontal row of three boxes
     lv_obj_t *row = lv_obj_create(tab_live);
-    lv_obj_set_size(row, lv_pct(100), 120);
+    lv_obj_set_size(row, lv_pct(100), 100);
     lv_obj_set_flex_flow(row, LV_STYLE_PAD_ROW);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLL_CHAIN_HOR);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_align(
       row,
       LV_FLEX_ALIGN_SPACE_EVENLY,
@@ -271,13 +279,15 @@ void setup(void) {
     );
 
     // Helper to create each 30%‐wide box
-    #define NEW_BOX(name, txt, label_ptr) \
-      do { \
+#define NEW_BOX(name, txt, label_ptr) \
+    do { \
         lv_obj_t *box = lv_obj_create(row); \
         lv_obj_set_size(box, lv_pct(30), 80); \
         lv_obj_set_style_pad_all(box, 8, 0); \
         lv_obj_set_style_radius(box, 6, 0); \
-        lv_obj_set_style_bg_color(box, lv_palette_darken(LV_PALETTE_GREY,4), 0); \
+        lv_obj_set_style_bg_opa(box, LV_OPA_TRANSP, 0); \
+        lv_obj_set_style_border_opa(box, LV_OPA_TRANSP, 0); \
+        lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE); \
         lv_obj_t *h = lv_label_create(box); \
         lv_label_set_text(h, name); \
         lv_obj_add_style(h, &style_title, 0); \
@@ -286,7 +296,8 @@ void setup(void) {
         lv_label_set_text(*(label_ptr), txt); \
         lv_obj_add_style(*(label_ptr), &style_val, 0); \
         lv_obj_align(*(label_ptr), LV_ALIGN_CENTER, 0, 10); \
-      } while(0)
+    } while(0)
+
 
     NEW_BOX("Batt V", "0.00 V", &lbl_battV);
     NEW_BOX("Batt A", "0.0 A",  &lbl_battA);
@@ -351,6 +362,21 @@ void setup(void) {
 
     lvgl_port_unlock();
     logSection("Setup complete");
+    
+        // 7) Brightness slider
+    lv_obj_t *lbl_brightness = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_brightness, &style_title, 0);
+    lv_label_set_text(lbl_brightness, "Brightness:");
+    lv_obj_align(lbl_brightness, LV_ALIGN_TOP_LEFT, 8, 136);
+
+    lv_obj_t *slider = lv_slider_create(tab_info);
+    lv_obj_set_width(slider, lv_pct(80));
+    lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 8, 160);
+    lv_slider_set_range(slider, 1, 100);
+    lv_slider_set_value(slider, 5, LV_ANIM_OFF); // Initial value matches bsp_display_brightness_set(5)
+
+    lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
 
     // Start BLE
     victron_ble_register_callback(on_panel_data);
