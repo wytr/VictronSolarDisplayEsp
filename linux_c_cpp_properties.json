@@ -1,0 +1,21 @@
+{
+  "configurations": [
+    {
+      "name": "ESP-IDF",
+      "compilerPath": "/home/mrtn/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+      "includePath": [
+        "/home/mrtn/esp/esp-idf/components/**",
+        "${workspaceFolder}/**"
+      ],
+      "browse": {
+        "path": [
+          "/home/mrtn/esp/esp-idf/components",
+          "${workspaceFolder}"
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      }
+    }
+  ],
+  "version": 4
+}
