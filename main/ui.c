@@ -74,6 +74,7 @@ void ui_init(void) {
     lv_obj_set_flex_flow(row, LV_STYLE_PAD_ROW);
     lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_EVENLY,
                            LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
     #define NEW_BOX(name, txt, ptr) do { \
         lv_obj_t *b = lv_obj_create(row); \
