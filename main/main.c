@@ -13,10 +13,6 @@
 #include "esp_heap_caps.h"
 #include "ui.h"
 
-// Font declarations for UI module
-LV_FONT_DECLARE(font_awesome_solar_panel_40);
-LV_FONT_DECLARE(font_awesome_bolt_40);
-
 static const char *TAG = "DEMO_LVGL";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
 #define LVGL_PORT_ROTATION_DEGREE 90
