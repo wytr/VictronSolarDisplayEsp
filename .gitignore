@@ -36,9 +36,6 @@
 *.log
 *.tmp
 
-# === Core dumps ===
-core*
-
 # === Editor backup/swap files ===
 *~
 *.bak

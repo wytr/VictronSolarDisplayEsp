@@ -11,6 +11,9 @@
 #include <esp_system.h>
 #include <esp_heap_caps.h>
 
+LV_FONT_DECLARE(font_awesome_solar_panel_40);
+LV_FONT_DECLARE(font_awesome_bolt_40);
+
 static const char *TAG = "DEMO_LVGL";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
 #define LVGL_PORT_ROTATION_DEGREE 90
@@ -20,6 +23,10 @@ static lv_obj_t *tabview, *tab_live, *tab_info, *kb;
 static lv_style_t style_title, style_val, style_big;
 static lv_obj_t *lbl_battV, *lbl_battA, *lbl_loadA;
 static lv_obj_t *lbl_solar, *lbl_yield, *lbl_state, *lbl_error;
+
+static lv_obj_t *solar_symbol;
+static lv_obj_t *bolt_symbol;
+
 static lv_obj_t *ta_mac, *ta_key;
 static lv_obj_t *lbl_load_watt;
 
@@ -161,13 +168,13 @@ static void on_panel_data(const victronPanelData_t *d) {
              charger_state_str(d->deviceState), err_str(d->errorCode));
     // ---------------------
 
-    lv_label_set_text_fmt(lbl_load_watt, "Load: %lu W", loadWatt);
+    lv_label_set_text_fmt(lbl_load_watt, "%lu W", loadWatt);
 
     lv_label_set_text_fmt(lbl_battV, "%d.%02d V", battV_i, battV_f);
     lv_label_set_text_fmt(lbl_battA, "%d.%1d A", battA_i, battA_f);
     lv_label_set_text_fmt(lbl_loadA, "%d.%1d A", load_i,  load_f);
 
-    lv_label_set_text_fmt(lbl_solar, "Solar: %lu W",  solarW);
+    lv_label_set_text_fmt(lbl_solar, "%lu W",  solarW);
     lv_label_set_text_fmt(lbl_yield, "Yield: %lu Wh", yieldWh);
     lv_label_set_text_fmt(lbl_state, "%s", charger_state_str(d->deviceState));
     lv_label_set_text_fmt(lbl_error, "%s",    err_str(d->errorCode));
@@ -242,8 +249,6 @@ void setup(void) {
     tabview  = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 40);
     tab_live = lv_tabview_add_tab(tabview, "Live");
     tab_info = lv_tabview_add_tab(tabview, "Info");
-    lv_obj_t *content = lv_tabview_get_content(tabview);
-
     kb = lv_keyboard_create(tab_info);
     lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(kb, LV_OBJ_FLAG_SCROLL_CHAIN_HOR);
@@ -277,7 +282,6 @@ void setup(void) {
       LV_FLEX_ALIGN_CENTER,
       LV_FLEX_ALIGN_CENTER
     );
-
     // Helper to create each 30%‐wide box
 #define NEW_BOX(name, txt, label_ptr) \
     do { \
@@ -308,20 +312,34 @@ void setup(void) {
     lv_label_set_text(lbl_state, "State");
     lv_obj_align(lbl_state, LV_ALIGN_CENTER, 0, 50);
 
+    solar_symbol = lv_label_create(tab_live);
+    lv_obj_set_style_text_font(solar_symbol, &font_awesome_solar_panel_40, 0); // Apply custom font
+
+    lv_label_set_text(solar_symbol, "\xEF\x96\xBA"); // Unicode U+F5BA (UTF-8 encoding)
+
+    lv_obj_align(solar_symbol, LV_ALIGN_BOTTOM_LEFT, 25, -55);
+
+    bolt_symbol = lv_label_create(tab_live);
+    lv_obj_set_style_text_font(bolt_symbol, &font_awesome_bolt_40, 0); // Apply custom font
+
+    lv_label_set_text(bolt_symbol, "\xEF\x83\xA7"); // Unicode U+F5BA (UTF-8 encoding)
+
+    lv_obj_align(bolt_symbol, LV_ALIGN_BOTTOM_RIGHT, -28, -55);
+
     lbl_solar = lv_label_create(tab_live);
     lv_obj_add_style(lbl_solar, &style_title, 0);
-    lv_label_set_text(lbl_solar, "Solar: 0 W");
-    lv_obj_align(lbl_solar, LV_ALIGN_BOTTOM_LEFT, 8, -8);
+    lv_label_set_text(lbl_solar, "");
+    lv_obj_align(lbl_solar, LV_ALIGN_BOTTOM_LEFT, 32, -8);
 
     lbl_yield = lv_label_create(tab_live);
     lv_obj_add_style(lbl_yield, &style_title, 0);
-    lv_label_set_text(lbl_yield, "Yield: 0 Wh");
+    lv_label_set_text(lbl_yield, "");
     lv_obj_align(lbl_yield, LV_ALIGN_BOTTOM_MID, 0, -8);
 
     lbl_load_watt = lv_label_create(tab_live);
     lv_obj_add_style(lbl_load_watt, &style_title, 0);
-    lv_label_set_text(lbl_load_watt, "Load: 0 W");
-    lv_obj_align(lbl_load_watt, LV_ALIGN_BOTTOM_RIGHT, -8, -8);
+    lv_label_set_text(lbl_load_watt, "");
+    lv_obj_align(lbl_load_watt, LV_ALIGN_BOTTOM_RIGHT, -31, -8);
 
 
     // 6) Info tab: MAC and AES‐key text areas
