@@ -17,7 +17,7 @@ static const char *TAG = "DEMO_LVGL";
 
 // LVGL objects & styles
 static lv_obj_t *tabview, *tab_live, *tab_info, *kb;
-static lv_style_t style_title, style_val;
+static lv_style_t style_title, style_val, style_big;
 static lv_obj_t *lbl_battV, *lbl_battA, *lbl_loadA;
 static lv_obj_t *lbl_solar, *lbl_yield, *lbl_state, *lbl_error;
 static lv_obj_t *ta_mac, *ta_key;
@@ -162,7 +162,7 @@ static void on_panel_data(const victronPanelData_t *d) {
 
     lv_label_set_text_fmt(lbl_solar, "Solar: %lu W",  solarW);
     lv_label_set_text_fmt(lbl_yield, "Yield: %lu Wh", yieldWh);
-    lv_label_set_text_fmt(lbl_state, "State: %s", charger_state_str(d->deviceState));
+    lv_label_set_text_fmt(lbl_state, "%s", charger_state_str(d->deviceState));
     lv_label_set_text_fmt(lbl_error, "%s",    err_str(d->errorCode));
 }
 
@@ -247,6 +247,10 @@ void setup(void) {
     lv_style_set_text_font(&style_title, &lv_font_montserrat_16);
     lv_style_set_text_color(&style_title, lv_color_white());
 
+    lv_style_init(&style_big);
+    lv_style_set_text_font(&style_big, &lv_font_montserrat_40);
+    lv_style_set_text_color(&style_big, lv_color_white());
+
     lv_style_init(&style_val);
 #if LV_FONT_MONTSERRAT_30
     lv_style_set_text_font(&style_val, &lv_font_montserrat_30);
@@ -288,6 +292,11 @@ void setup(void) {
     NEW_BOX("Batt A", "0.0 A",  &lbl_battA);
     NEW_BOX("Load A", "0.0 A", &lbl_loadA);
 
+    lbl_state = lv_label_create(tab_live);
+    lv_obj_add_style(lbl_state, &style_big, 0);
+    lv_label_set_text(lbl_state, "State");
+    lv_obj_align(lbl_state, LV_ALIGN_CENTER, 0, 50);
+
     lbl_solar = lv_label_create(tab_live);
     lv_obj_add_style(lbl_solar, &style_title, 0);
     lv_label_set_text(lbl_solar, "Solar: 0 W");
@@ -305,10 +314,6 @@ void setup(void) {
 
 
     // 6) Info tab: MAC and AES‐key text areas
-    lbl_state = lv_label_create(tab_info);
-    lv_obj_add_style(lbl_state, &style_title, 0);
-    lv_label_set_text(lbl_state, "State: 0");
-    lv_obj_align(lbl_state, LV_ALIGN_BOTTOM_LEFT, 8, -48);
 
     lbl_error = lv_label_create(tab_info);
     lv_obj_add_style(lbl_error, &style_title, 0);
@@ -337,7 +342,7 @@ void setup(void) {
     ta_key = lv_textarea_create(tab_info);
     lv_textarea_set_one_line(ta_key, true);
     lv_obj_set_width(ta_key, lv_pct(80));
-    lv_textarea_set_text(ta_key, "0123456789ABCDEF");
+    lv_textarea_set_text(ta_key, "4B7178E64C828A262CDD5161E3404B7A");
     lv_obj_align(ta_key, LV_ALIGN_TOP_LEFT, 8, 96);
     lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_FOCUSED, kb);
     lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_DEFOCUSED, kb);
