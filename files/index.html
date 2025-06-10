@@ -1,0 +1,127 @@
+<!-- files/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Victron AES Key Config</title>
+  <link rel="icon" href="/favicon.ico"/>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+
+  <!-- 3D Cube + Particles -->
+  <div class="cube-container">
+    <div class="particles"></div>
+    <div class="cube">
+      <div class="face front">
+      </div>
+      <div class="face back"></div>
+      <div class="face right"></div>
+      <div class="face left"></div>
+      <div class="face top"></div>
+      <div class="face bottom"></div>
+    </div>
+  </div>
+
+  <h1>Victron AES Key Configuration</h1>
+
+  <!-- AES Key Form -->
+  <form id="keyForm">
+    <label for="key">Enter 16-byte AES Key (32 hex chars):</label><br/>
+    <input type="text"
+           id="key"
+           name="key"
+           maxlength="32"
+           placeholder="4B7178E64C828A262CDD5161E3404B7A"
+           required/><br/>
+    <button type="submit">Save Key</button>
+  </form>
+
+  <div id="response"></div>
+
+  <!-- jQuery -->
+  <script src="/js/jquery-3.7.1.js"></script>
+
+  <!-- Form submit + trigger animations -->
+  <script>
+    $('#keyForm').on('submit', function(e) {
+      e.preventDefault();
+      var form = this;
+      $.post('/save', $(form).serialize())
+        .done(function() { $('#response').text('Saved! Rebooting…'); })
+        .fail(function() { $('#response').text('Error saving key.'); });
+      triggerExplosion(form.querySelector('button'));
+      setTimeout(triggerSpiralParticleCollect, 4000);
+    });
+  </script>
+
+  <!-- 3D cube & particle scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      /* initial particles */
+      const particleCount = 20;
+      const particlesContainer = document.querySelector('.particles');
+      for (let i = 0; i < particleCount; i++) {
+        const p = document.createElement('div');
+        p.classList.add('particle');
+        const sx = (Math.random()*200-100)+'px';
+        const sy = (Math.random()*200-100)+'px';
+        const sz = (Math.random()*200-100)+'px';
+        const ex = (Math.random()*200-100)+'px';
+        const ey = (Math.random()*200-100)+'px';
+        const ez = (Math.random()*200-100)+'px';
+        p.style.setProperty('--startX', sx);
+        p.style.setProperty('--startY', sy);
+        p.style.setProperty('--startZ', sz);
+        p.style.setProperty('--endX',   ex);
+        p.style.setProperty('--endY',   ey);
+        p.style.setProperty('--endZ',   ez);
+        p.style.animationDuration = (Math.random()*5+5)+'s';
+        p.style.animationDelay = (Math.random()*5)+'s';
+        particlesContainer.appendChild(p);
+      }
+    });
+
+    function triggerExplosion(element) {
+      const count = 50, cont = document.querySelector('.particles');
+      const rect = element.getBoundingClientRect(), cRect = cont.getBoundingClientRect();
+      const centerX = (rect.left + rect.width/2) - cRect.left;
+      const centerY = (rect.top  + rect.height/2)- cRect.top;
+      for (let i=0;i<count;i++) {
+        const p = document.createElement('div');
+        p.classList.add('particle');
+        const ex = (Math.random()*400-200)+'px';
+        const ey = (Math.random()*400-200)+'px';
+        const ez = (Math.random()*400-200)+'px';
+        p.style.setProperty('--startX', centerX+'px');
+        p.style.setProperty('--startY', centerY+'px');
+        p.style.setProperty('--startZ', '0px');
+        p.style.setProperty('--endX',   ex);
+        p.style.setProperty('--endY',   ey);
+        p.style.setProperty('--endZ',   ez);
+        p.style.animationDuration = (Math.random()*2+0.5)+'s';
+        cont.appendChild(p);
+        setTimeout(()=>p.remove(), parseFloat(p.style.animationDuration)*1000);
+      }
+    }
+
+    function triggerSpiralParticleCollect() {
+      const count = 30, cont = document.querySelector('.particles');
+      for (let i=0;i<count;i++) {
+        const p = document.createElement('div');
+        p.classList.add('particle','spiral-collect');
+        const r = Math.random()*200, a = Math.random()*Math.PI*2;
+        p.style.setProperty('--startX', (Math.cos(a)*r)+'px');
+        p.style.setProperty('--startY', (Math.sin(a)*r)+'px');
+        p.style.setProperty('--startZ', (Math.random()*200-100)+'px');
+        p.style.animationDuration = (Math.random()*3+1)+'s';
+        p.style.animationDelay = (Math.random()*2)+'s';
+        cont.appendChild(p);
+        setTimeout(()=>p.remove(), parseFloat(p.style.animationDuration)*1000 + 2000);
+      }
+    }
+  </script>
+
+</body>
+</html>

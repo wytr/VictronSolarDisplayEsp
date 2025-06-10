@@ -1,3 +1,4 @@
+
 /* main.c */
 #include <stdio.h>
 #include <inttypes.h>
@@ -12,6 +13,7 @@
 #include "esp_system.h"
 #include "esp_heap_caps.h"
 #include "ui.h"
+#include "config_server.h"
 
 static const char *TAG = "VICTRON_LVGL_APP";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
@@ -73,6 +75,10 @@ void setup(void) {
     /* --- Lock LVGL port and initialize UI --- */
     lvgl_port_lock(0);
     ui_init();
+
+    /* --- Start Wi-Fi AP & config server --- */
+    wifi_ap_init();
+    config_server_start();
 
     /* --- Register BLE callback and start BLE --- */
     victron_ble_register_callback(ui_on_panel_data);

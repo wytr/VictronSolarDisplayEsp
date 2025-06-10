@@ -1,0 +1,95 @@
+/* files/style.css */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #121212;
+  color: #E0E0E0;
+}
+h1 {
+  text-align: center;
+  margin-top: 8rem;
+}
+.container, form, #response { text-align: center; }
+
+.cube-container {
+  position: relative;
+  width: 200px; height: 200px;
+  margin: 10rem auto;
+  perspective: 800px;
+}
+.cube {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d;
+  animation: rotateCube 30s infinite linear;
+}
+.face {
+  position: absolute; width:200px; height:200px;
+  border:2px solid #007acc; /* VSCode blue */
+  box-shadow:0 0 15px #007acc;
+  background: transparent; box-sizing: border-box;
+}
+.particles {
+  position: absolute; width:1px; height:1px;
+  top:50%; left:50%; perspective:800px;
+  pointer-events:none;
+}
+.particle {
+  position:absolute; width:3px; height:3px;
+  background:#007acc; /* VSCode blue */
+  border-radius:50%; opacity:0.8;
+  animation: moveParticle linear infinite;
+}
+@keyframes moveParticle {
+  0% {transform:translate3d(var(--startX),var(--startY),var(--startZ));opacity:1;}
+ 100%{transform:translate3d(var(--endX),var(--endY),var(--endZ));opacity:0;}
+}
+@keyframes spiral-collect {
+  0% {transform:translate3d(var(--startX),var(--startY),var(--startZ));opacity:1;}
+ 100%{transform:translate3d(0,0,0) rotate(720deg);opacity:0;}
+}
+.particle.spiral-collect { animation: spiral-collect ease-in-out; }
+
+.git-icon {
+  width:100px; height:100px;
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%) rotate3d(1,1,1,0deg);
+  transform-style: preserve-3d; backface-visibility:hidden;
+  animation: rotateIcon 30s infinite linear;
+}
+@keyframes rotateIcon {
+  from {transform:translate(-50%,-50%) rotateX(0deg) rotateY(0deg);}  
+  to   {transform:translate(-50%,-50%) rotateX(360deg) rotateY(360deg);}  
+}
+.face.front  {transform:rotateY(  0deg) translateZ(100px);}  
+.face.back   {transform:rotateY(180deg) translateZ(100px);}  
+.face.right  {transform:rotateY( 90deg) translateZ(100px);}  
+.face.left   {transform:rotateY(-90deg) translateZ(100px);}  
+.face.top    {transform:rotateX( 90deg) translateZ(100px);}  
+.face.bottom {transform:rotateX(-90deg) translateZ(100px);}  
+@keyframes rotateCube {
+  from {transform:rotateX(0deg) rotateY(0deg);}  
+  to   {transform:rotateX(360deg) rotateY(360deg);}  
+}
+
+/* AES form styling */
+#keyForm {
+  max-width: 300px; margin: 1rem auto;
+  background: #1e1e1e; padding:1rem; border-radius:8px;
+  box-shadow:0 0 10px rgba(0,122,204,0.5); /* blue shadow */
+}
+#keyForm label {
+  display:block; margin-bottom:0.5rem; font-weight:bold;
+  color:#E0E0E0;
+}
+#keyForm input[type="text"] {
+  width:100%; padding:0.5rem; margin-bottom:1rem;
+  background:#2e2e2e; border:1px solid #555; color:#E0E0E0;
+  border-radius:4px; font-size:1rem;
+}
+#keyForm button {
+  width:100%; padding:0.5rem; background:#007acc; /* VSCode blue */
+  border:none; border-radius:4px; color:#fff;
+  font-size:1rem; cursor:pointer; transition:background 0.2s;
+}
+#keyForm button:hover { background:#005f99; }
+#response { margin-top:1rem; font-size:0.9rem; text-align:center; }
