@@ -13,7 +13,7 @@
 #include "esp_heap_caps.h"
 #include "ui.h"
 
-static const char *TAG = "DEMO_LVGL";
+static const char *TAG = "VICTRON_LVGL_APP";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
 #define LVGL_PORT_ROTATION_DEGREE 90
 
