@@ -8,6 +8,13 @@
 #include "lv_port.h"
 #include "esp_log.h"
 #include "victron_ble.h"
+#include "nvs_flash.h"
+#include "config_storage.h"
+#include "config_server.h"
+#include "esp_wifi.h"
+
+// NVS namespace for Wi-Fi
+#define WIFI_NAMESPACE "wifi"
 
 // Font Awesome symbols (declared in main.c)
 LV_FONT_DECLARE(font_awesome_solar_panel_40);
@@ -23,16 +30,33 @@ static lv_obj_t *lbl_solar, *lbl_yield, *lbl_state, *lbl_error;
 static lv_obj_t *solar_symbol, *bolt_symbol;
 static lv_obj_t *ta_mac, *ta_key, *lbl_load_watt;
 
+// Wi-Fi AP config UI elements
+static lv_obj_t *ta_ssid, *ta_password, *cb_ap_enable;
+
 // Forward declarations
 static const char *err_str(uint8_t e);
 static const char *charger_state_str(uint8_t s);
 static void ta_event_cb(lv_event_t *e);
 static void brightness_slider_event_cb(lv_event_t *e);
+static void wifi_event_cb(lv_event_t *e);
+static void ap_checkbox_event_cb(lv_event_t *e);
 
 void ui_init(void) {
-    //ESP_LOGI(TAG_UI, "Initializing UI...");
+    // Initialize NVS
+    nvs_flash_init();
 
-    // Dark theme initialization
+    // Load defaults from storage
+    char default_ssid[33]; size_t ssid_len = sizeof(default_ssid);
+    char default_pass[65]; size_t pass_len = sizeof(default_pass);
+    uint8_t ap_enabled;
+    if (load_wifi_config(default_ssid, &ssid_len, default_pass, &pass_len, &ap_enabled) != ESP_OK) {
+        strncpy(default_ssid, "VictronConfig", sizeof(default_ssid));
+        default_ssid[sizeof(default_ssid)-1] = '\0';
+        default_pass[0] = '\0';
+        ap_enabled = 1;
+    }
+
+    // Initialize theme
 #if LV_USE_THEME_DEFAULT
     lv_theme_default_init(NULL,
         lv_palette_main(LV_PALETTE_BLUE),
@@ -42,12 +66,12 @@ void ui_init(void) {
     );
 #endif
 
-    // Create tabview
+    // Create tabs
     tabview  = lv_tabview_create(lv_scr_act(), LV_DIR_TOP, 40);
     tab_live = lv_tabview_add_tab(tabview, "Live");
     tab_info = lv_tabview_add_tab(tabview, "Info");
 
-    // Keyboard for Info tab
+    // Keyboard for textareas
     kb = lv_keyboard_create(tab_info);
     lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
 
@@ -100,7 +124,7 @@ void ui_init(void) {
     lv_label_set_text(lbl_state, "State");
     lv_obj_align(lbl_state, LV_ALIGN_CENTER, 0, 50);
 
-    // Icons
+    // Icons and labels
     solar_symbol = lv_label_create(tab_live);
     lv_obj_set_style_text_font(solar_symbol, &font_awesome_solar_panel_40, 0);
     lv_label_set_text(solar_symbol, "\xEF\x96\xBA");
@@ -126,7 +150,7 @@ void ui_init(void) {
     lv_label_set_text(lbl_load_watt, "");
     lv_obj_align(lbl_load_watt, LV_ALIGN_BOTTOM_RIGHT, -31, -8);
 
-    // Info tab fields
+    // Info tab: error, MAC, AES Key
     lbl_error = lv_label_create(tab_info);
     lv_obj_add_style(lbl_error, &style_title, 0);
     lv_label_set_text(lbl_error, "Err: 0");
@@ -175,35 +199,67 @@ void ui_init(void) {
     lv_slider_set_value(slider, 5, LV_ANIM_OFF);
     lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
+    // Wi-Fi SSID
+    lv_obj_t *lbl_ssid = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_ssid, &style_title, 0);
+    lv_label_set_text(lbl_ssid, "AP SSID:");
+    lv_obj_align(lbl_ssid, LV_ALIGN_TOP_LEFT, 8, 200);
+
+    ta_ssid = lv_textarea_create(tab_info);
+    lv_textarea_set_one_line(ta_ssid, true);
+    lv_obj_set_width(ta_ssid, lv_pct(80));
+    lv_textarea_set_text(ta_ssid, default_ssid);
+    lv_obj_align(ta_ssid, LV_ALIGN_TOP_LEFT, 8, 224);
+    lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_FOCUSED, NULL);
+    lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
+    lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_CANCEL, NULL);
+    lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_READY, NULL);
+    lv_obj_add_event_cb(ta_ssid, wifi_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
+    // Wi-Fi Password
+    lv_obj_t *lbl_pass = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_pass, &style_title, 0);
+    lv_label_set_text(lbl_pass, "AP Password:");
+    lv_obj_align(lbl_pass, LV_ALIGN_TOP_LEFT, 8, 264);
+
+    ta_password = lv_textarea_create(tab_info);
+    lv_textarea_set_password_mode(ta_password, true);
+    lv_textarea_set_one_line(ta_password, true);
+    lv_obj_set_width(ta_password, lv_pct(80));
+    lv_textarea_set_text(ta_password, default_pass);
+    lv_obj_align(ta_password, LV_ALIGN_TOP_LEFT, 8, 288);
+    lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_FOCUSED, NULL);
+    lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
+    lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_CANCEL, NULL);
+    lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_READY, NULL);
+    lv_obj_add_event_cb(ta_password, wifi_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
+    // Enable AP checkbox
+    cb_ap_enable = lv_checkbox_create(tab_info);
+    lv_checkbox_set_text(cb_ap_enable, "Enable AP");
+    if (ap_enabled) lv_obj_add_state(cb_ap_enable, LV_STATE_CHECKED);
+    lv_obj_align(cb_ap_enable, LV_ALIGN_TOP_LEFT, 8, 332);
+    lv_obj_add_event_cb(cb_ap_enable, ap_checkbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
     lvgl_port_unlock();
-    //ESP_LOGI(TAG_UI, "UI Initialized");
 }
 
 void ui_on_panel_data(const victronPanelData_t *d) {
-    int battVraw = d->batteryVoltage;     // centi-volts
+    int battVraw = d->batteryVoltage;
     int battV_i  = battVraw / 100;
     int battV_f  = battVraw % 100;
 
-    int battAraw = d->batteryCurrent;     // deci-amps
+    int battAraw = d->batteryCurrent;
     int battA_i  = battAraw / 10;
     int battA_f  = abs(battAraw % 10);
 
-    int loadRaw  = ((d->outputCurrentHi & 1) << 8) | d->outputCurrentLo;
-    int load_i   = loadRaw / 10;
-    int load_f   = loadRaw % 10;
+    int loadRaw = ((d->outputCurrentHi & 1) << 8) | d->outputCurrentLo;
+    int load_i = loadRaw / 10;
+    int load_f = loadRaw % 10;
 
-    uint32_t solarW  = d->inputPower;
-    uint32_t yieldWh = (uint32_t)(d->todayYield * 0.01f * 1000.0f);
-    uint32_t loadWatt = ((loadRaw * battVraw) / 1000);
-
-    //ESP_LOGI(TAG_UI, "Battery: %d.%02d V, %d.%1d A (raw: %d cV, %d dA)",
-    //         battV_i, battV_f, battA_i, battA_f, battVraw, battAraw);
-    //ESP_LOGI(TAG_UI, "Load: %d.%1d A (raw: %d dA), approx. %lu W",
-    //         load_i, load_f, loadRaw, loadWatt);
-    //ESP_LOGI(TAG_UI, "Solar input: %lu W, Yield today: %lu Wh",
-    //         solarW, yieldWh);
-    //ESP_LOGI(TAG_UI, "Device state: %s, Error: %s",
-    //         charger_state_str(d->deviceState), err_str(d->errorCode));
+    uint32_t solarW   = d->inputPower;
+    uint32_t yieldWh  = (uint32_t)(d->todayYield * 0.01f * 1000.0f);
+    uint32_t loadWatt = (loadRaw * battVraw) / 1000;
 
     lv_label_set_text_fmt(lbl_battV, "%d.%02d V", battV_i, battV_f);
     lv_label_set_text_fmt(lbl_battA, "%d.%1d A", battA_i, battA_f);
@@ -216,7 +272,7 @@ void ui_on_panel_data(const victronPanelData_t *d) {
 }
 
 static const char *err_str(uint8_t e) {
-    switch(e) {
+    switch (e) {
         case 0:   return "OK";
         case 1:   return "Battery temp too high";
         case 2:   return "Battery voltage too high";
@@ -271,39 +327,68 @@ const char *charger_state_str(uint8_t s) {
 }
 
 static void ta_event_cb(lv_event_t *e) {
-    lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *ta = lv_event_get_target(e);
-    switch (code) {
-        case LV_EVENT_FOCUSED:
-            //ESP_LOGI(TAG_UI, "TextArea focused");
-            lv_keyboard_set_textarea(kb, ta);
-            lv_obj_move_foreground(kb);
-            lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
-            break;
-        case LV_EVENT_DEFOCUSED:
-            //ESP_LOGI(TAG_UI, "TextArea defocused");
-            lv_keyboard_set_textarea(kb, NULL);
-            lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-            break;
-        case LV_EVENT_CANCEL:
-            //ESP_LOGI(TAG_UI, "Keyboard cancel event");
-            lv_keyboard_set_textarea(kb, NULL);
-            lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-            break;
-        case LV_EVENT_READY:
-            //ESP_LOGI(TAG_UI, "Keyboard ready event");
-            lv_keyboard_set_textarea(kb, NULL);
-            lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-            break;
-        default:
-            //ESP_LOGI(TAG_UI, "Unhandled event: %d", code);
-            break;
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_FOCUSED) {
+        lv_keyboard_set_textarea(kb, ta);
+        lv_obj_move_foreground(kb);
+        lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    } else if (code == LV_EVENT_DEFOCUSED || code == LV_EVENT_CANCEL || code == LV_EVENT_READY) {
+        lv_keyboard_set_textarea(kb, NULL);
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
     }
 }
 
 static void brightness_slider_event_cb(lv_event_t *e) {
-    lv_obj_t *slider = lv_event_get_target(e);
-    int val = lv_slider_get_value(slider);
+    int val = lv_slider_get_value(lv_event_get_target(e));
     bsp_display_brightness_set(val);
     ESP_LOGI(TAG_UI, "Brightness set to %d", val);
 }
+
+static void wifi_event_cb(lv_event_t *e) {
+    lv_obj_t *ta = lv_event_get_target(e);
+    const char *txt = lv_textarea_get_text(ta);
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(WIFI_NAMESPACE, NVS_READWRITE, &h);
+    if (err == ESP_OK) {
+        if (ta == ta_ssid)
+            nvs_set_str(h, "ssid", txt);
+        else if (ta == ta_password)
+            nvs_set_str(h, "password", txt);
+        nvs_commit(h);
+        nvs_close(h);
+        ESP_LOGI(TAG_UI, "Wi-Fi config saved");
+    } else {
+        ESP_LOGE(TAG_UI, "nvs_open failed: %s", esp_err_to_name(err));
+    }
+}
+
+
+static void ap_checkbox_event_cb(lv_event_t *e) {
+    bool en = lv_obj_has_state(cb_ap_enable, LV_STATE_CHECKED);
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(WIFI_NAMESPACE, NVS_READWRITE, &h);
+    if (err == ESP_OK) {
+        nvs_set_u8(h, "enabled", en);
+        nvs_commit(h);
+        nvs_close(h);
+        ESP_LOGI(TAG_UI, "AP %s", en ? "enabled" : "disabled");
+    } else {
+        ESP_LOGE(TAG_UI, "nvs_open failed: %s", esp_err_to_name(err));
+    }
+
+    if (en) {
+        wifi_ap_init();
+    } else {
+        esp_err_t stop_err = esp_wifi_stop();
+        if (stop_err == ESP_OK) {
+            ESP_LOGI(TAG_UI, "Soft-AP stopped");
+        } else {
+            ESP_LOGE(TAG_UI, "Failed to stop AP: %s", esp_err_to_name(stop_err));
+        }
+        // (optionally)
+        // esp_wifi_deinit();
+    }
+}
+
+

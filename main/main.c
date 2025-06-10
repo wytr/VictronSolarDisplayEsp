@@ -15,6 +15,7 @@
 #include "ui.h"
 #include "config_server.h"
 
+
 static const char *TAG = "VICTRON_LVGL_APP";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
 #define LVGL_PORT_ROTATION_DEGREE 90

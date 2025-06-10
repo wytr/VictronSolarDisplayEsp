@@ -4,6 +4,7 @@
 #include "esp_spiffs.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "nvs.h"
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
@@ -13,54 +14,118 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <dirent.h>  // opendir, readdir, closedir
+#include <dirent.h>
 
 static const char *TAG = "cfg_srv";
 
-// Initialize Wi-Fi AP for configuration
-esp_err_t wifi_ap_init(void) {
-    ESP_LOGI(TAG, "Initializing NVS for Wi-Fi AP");
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_LOGW(TAG, "NVS partition truncated, erasing...");
-        ESP_ERROR_CHECK(nvs_flash_erase());
+// NVS namespace for Wi-Fi AP settings
+#define WIFI_NAMESPACE    "wifi"
+
+/**
+ * @brief   Initialize and/or start the Soft-AP.
+ *
+ *   - On first call: initializes NVS, TCP/IP stack, event loop and Wi-Fi driver.
+ *   - On every call: reads SSID/password/enabled flag from NVS.
+ *     • If enabled, configures and starts Soft-AP.
+ *     • If disabled, stops Soft-AP.
+ */
+esp_err_t wifi_ap_init(void)
+{
+    static bool subsystems_inited = false;
+    esp_err_t err;
+
+    // 1) One-time subsystems init
+    if (!subsystems_inited) {
+        // NVS
         err = nvs_flash_init();
+        if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
+            err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            ESP_LOGW(TAG, "Erasing NVS and retrying");
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            err = nvs_flash_init();
+        }
+        ESP_ERROR_CHECK(err);
+
+        // TCP/IP stack + default event loop
+        ESP_ERROR_CHECK(esp_netif_init());
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+        // Wi-Fi driver
+        wifi_init_config_t wcfg = WIFI_INIT_CONFIG_DEFAULT();
+        ESP_ERROR_CHECK(esp_wifi_init(&wcfg));
+
+        subsystems_inited = true;
     }
-    ESP_ERROR_CHECK(err);
 
-    ESP_LOGI(TAG, "Initializing TCP/IP stack");
-    ESP_ERROR_CHECK(esp_netif_init());
+    // 2) Load SSID/password/enabled from NVS
+    char ssid[33] = {0};
+    char pass[65] = {0};
+    uint8_t enabled = 1;
 
-    ESP_LOGI(TAG, "Creating default event loop");
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    nvs_handle_t h;
+    if (nvs_open(WIFI_NAMESPACE, NVS_READWRITE, &h) == ESP_OK) {
+        size_t sl = sizeof(ssid), pl = sizeof(pass);
+        if (nvs_get_str(h, "ssid", ssid, &sl) != ESP_OK || sl <= 1) {
+            strcpy(ssid, "VictronConfig");
+            nvs_set_str(h, "ssid", ssid);
+        }
+        if (nvs_get_str(h, "password", pass, &pl) != ESP_OK) {
+            pass[0] = '\0';
+            nvs_set_str(h, "password", pass);
+        }
+        if (nvs_get_u8(h, "enabled", &enabled) != ESP_OK) {
+            enabled = 1;
+            nvs_set_u8(h, "enabled", enabled);
+        }
+        nvs_commit(h);
+        nvs_close(h);
+    } else {
+        ESP_LOGW(TAG, "Failed to open NVS, using defaults");
+    }
 
-    ESP_LOGI(TAG, "Creating default Wi-Fi AP interface");
-    esp_netif_create_default_wifi_ap();
+    // 3) If disabled, stop Soft-AP
+    if (!enabled) {
+        ESP_LOGI(TAG, "AP disabled → stopping Soft-AP");
+        err = esp_wifi_stop();
+        if (err == ESP_OK || err == ESP_ERR_WIFI_NOT_STARTED) {
+            ESP_LOGI(TAG, "Soft-AP stopped");
+            return ESP_OK;
+        }
+        ESP_LOGE(TAG, "esp_wifi_stop() failed: %s", esp_err_to_name(err));
+        return err;
+    }
 
-    ESP_LOGI(TAG, "Initializing Wi-Fi driver");
-    wifi_init_config_t wifi_cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&wifi_cfg));
+    // 4) Start or restart Soft-AP
+    ESP_LOGI(TAG, "Starting Soft-AP, SSID='%s'", ssid);
 
-    ESP_LOGI(TAG, "Setting Wi-Fi mode to AP");
+    // This returns a pointer, not an esp_err_t
+    esp_netif_t *ap_netif = esp_netif_create_default_wifi_ap();
+    if (!ap_netif) {
+        ESP_LOGE(TAG, "esp_netif_create_default_wifi_ap() failed");
+        return ESP_FAIL;
+    }
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
 
-    wifi_config_t ap_config = {
+    wifi_config_t ap_cfg = {
         .ap = {
-            .ssid = "VictronConfig",
-            .ssid_len = 0,
-            .channel = 1,
-            .password = "",
+            .ssid_len       = strlen(ssid),
             .max_connection = 4,
-            .authmode = WIFI_AUTH_OPEN
-        },
+            .channel        = 1,
+        }
     };
-    ESP_LOGI(TAG, "Configuring AP: SSID='%s'", ap_config.ap.ssid);
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
+    strncpy((char*)ap_cfg.ap.ssid, ssid, sizeof(ap_cfg.ap.ssid));
+    if (pass[0]) {
+        strncpy((char*)ap_cfg.ap.password, pass, sizeof(ap_cfg.ap.password));
+        ap_cfg.ap.authmode = WIFI_AUTH_WPA2_PSK;
+    } else {
+        ap_cfg.ap.authmode = WIFI_AUTH_OPEN;
+    }
 
-    ESP_LOGI(TAG, "Starting Wi-Fi AP");
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "Wi-Fi SoftAP started successfully");
+    ESP_LOGI(TAG, "Soft-AP started");
     return ESP_OK;
 }
 
@@ -96,7 +161,7 @@ static void mount_spiffs(void) {
     }
 }
 
-// Determine MIME type
+// Determine MIME type based on file extension
 static const char* get_content_type(const char* path) {
     const char* ext = strrchr(path, '.');
     if (!ext) return "text/plain";
@@ -108,7 +173,7 @@ static const char* get_content_type(const char* path) {
     return "application/octet-stream";
 }
 
-// Serve file at given URI from SPIFFS
+// Serve a file from SPIFFS at the given URI
 static esp_err_t serve_from_spiffs(httpd_req_t *req, const char *uri) {
     char filepath[256];
     snprintf(filepath, sizeof(filepath), "/spiffs%s", uri);
@@ -140,7 +205,7 @@ static esp_err_t handle_static(httpd_req_t *req) {
     return serve_from_spiffs(req, req->uri);
 }
 
-// Fallback form for POST save
+// Fallback form for POST /save (AES key)
 static esp_err_t post_save(httpd_req_t *req) {
     ESP_LOGV(TAG, "HTTP POST /save");
     size_t len = req->content_len;
@@ -154,40 +219,41 @@ static esp_err_t post_save(httpd_req_t *req) {
     if (ret <= 0) { free(body); return ESP_FAIL; }
     body[ret] = '\0';
     char *hex = strchr(body, '=');
-    if (!hex || strlen(hex+1)!=32) { free(body); return ESP_FAIL; }
+    if (!hex || strlen(hex+1) != 32) { free(body); return ESP_FAIL; }
     hex++;
     uint8_t key[16];
-    for (int i=0;i<16;i++) {
-        char tmp[3]={hex[i*2],hex[i*2+1],0};
-        key[i]=strtol(tmp,NULL,16);
+    for (int i = 0; i < 16; i++) {
+        char tmp[3] = { hex[i*2], hex[i*2+1], 0 };
+        key[i] = strtol(tmp, NULL, 16);
     }
-    ESP_LOGI(TAG,"Parsed AES key:"); ESP_LOG_BUFFER_HEX(TAG,key,16);
+    ESP_LOGI(TAG, "Parsed AES key:"); ESP_LOG_BUFFER_HEX(TAG, key, 16);
     save_aes_key(key);
     free(body);
-    httpd_resp_set_type(req,"text/html");
-    httpd_resp_send(req,"<h3>Saved. Rebooting...</h3>",HTTPD_RESP_USE_STRLEN);
-    vTaskDelay(pdMS_TO_TICKS(100)); esp_restart();
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, "<h3>Saved. Rebooting...</h3>", HTTPD_RESP_USE_STRLEN);
+    vTaskDelay(pdMS_TO_TICKS(100));
+    esp_restart();
     return ESP_OK;
 }
 
-// Start server
+// Start the HTTP configuration server
 esp_err_t config_server_start(void) {
-    // Assumes Wi-Fi AP already initialized
+    // Assumes Wi-Fi AP already initialized (via wifi_ap_init)
     mount_spiffs();
     httpd_handle_t server;
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-    // Enable wildcard URI matching so static handler catches all paths
+    // Enable wildcard URI matching so static handler catches all
     cfg.uri_match_fn = httpd_uri_match_wildcard;
-    httpd_start(&server,&cfg);
+    httpd_start(&server, &cfg);
     
-    httpd_uri_t uri_root={ .uri="/", .method=HTTP_GET, .handler=handle_root};
-    httpd_register_uri_handler(server,&uri_root);
+    httpd_uri_t uri_root = { .uri = "/",    .method = HTTP_GET,  .handler = handle_root };
+    httpd_register_uri_handler(server, &uri_root);
 
-    httpd_uri_t uri_save={ .uri="/save", .method=HTTP_POST, .handler=post_save};
-    httpd_register_uri_handler(server,&uri_save);
+    httpd_uri_t uri_save = { .uri = "/save", .method = HTTP_POST, .handler = post_save };
+    httpd_register_uri_handler(server, &uri_save);
 
-    httpd_uri_t uri_static={ .uri="/*", .method=HTTP_GET, .handler=handle_static};
-    httpd_register_uri_handler(server,&uri_static);
+    httpd_uri_t uri_static = { .uri = "/*",  .method = HTTP_GET,  .handler = handle_static };
+    httpd_register_uri_handler(server, &uri_static);
 
     ESP_LOGI(TAG, "HTTP config server running");
     return ESP_OK;
