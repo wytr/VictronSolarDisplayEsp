@@ -15,11 +15,37 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include "esp_netif.h"
+#include "esp_netif_types.h"
+#include "dns_server.h" 
+#include <lwip/inet.h>
 
 static const char *TAG = "cfg_srv";
 
 // NVS namespace for Wi-Fi AP settings
 #define WIFI_NAMESPACE    "wifi"
+
+static void dhcp_set_captiveportal_url(void)
+{
+    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
+    if (!netif) {
+        ESP_LOGE(TAG, "No AP netif handle");
+        return;
+    }
+    esp_netif_ip_info_t ip_info;
+    esp_netif_get_ip_info(netif, &ip_info);
+    char ip_str[16];
+    inet_ntoa_r(ip_info.ip.addr, ip_str, sizeof(ip_str));
+    char uri[32];
+    snprintf(uri, sizeof(uri), "http://%s", ip_str);
+    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_netif_dhcps_stop(netif));
+    ESP_ERROR_CHECK(esp_netif_dhcps_option(netif,
+                                           ESP_NETIF_OP_SET,
+                                           ESP_NETIF_CAPTIVEPORTAL_URI,
+                                           uri, strlen(uri)));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_netif_dhcps_start(netif));
+    ESP_LOGI(TAG, "DHCP captive portal URL set to %s", uri);
+}
 
 /**
  * @brief   Initialize and/or start the Soft-AP.
@@ -125,6 +151,8 @@ esp_err_t wifi_ap_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 
+    dhcp_set_captiveportal_url();
+    
     ESP_LOGI(TAG, "Soft-AP started");
     return ESP_OK;
 }
@@ -236,25 +264,59 @@ static esp_err_t post_save(httpd_req_t *req) {
     return ESP_OK;
 }
 
+// Error handler for 404 - Not Found
+static esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
+{
+    httpd_resp_set_status(req, "302 Temporary Redirect");
+    httpd_resp_set_hdr(req, "Location", "/");
+    httpd_resp_send(req, "Redirecting to captive portal", HTTPD_RESP_USE_STRLEN);
+    ESP_LOGI(TAG, "Redirecting %s → /", req->uri);
+    return ESP_OK;
+}
+
+// Handler for captive portal redirection
+static esp_err_t handle_captive_redirect(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Captive portal redirect for %s", req->uri);
+    // Serve the real index.html instead of minimal HTML
+    return serve_from_spiffs(req, "/index.html");
+}
+
 // Start the HTTP configuration server
 esp_err_t config_server_start(void) {
-    // Assumes Wi-Fi AP already initialized (via wifi_ap_init)
     mount_spiffs();
-    httpd_handle_t server;
+    httpd_handle_t server = NULL;
     httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-    // Enable wildcard URI matching so static handler catches all
     cfg.uri_match_fn = httpd_uri_match_wildcard;
-    httpd_start(&server, &cfg);
-    
+    ESP_ERROR_CHECK(httpd_start(&server, &cfg));
+
     httpd_uri_t uri_root = { .uri = "/",    .method = HTTP_GET,  .handler = handle_root };
     httpd_register_uri_handler(server, &uri_root);
 
     httpd_uri_t uri_save = { .uri = "/save", .method = HTTP_POST, .handler = post_save };
     httpd_register_uri_handler(server, &uri_save);
 
+    // Register captive portal handlers BEFORE the catch-all!
+    httpd_uri_t uri_generate_204 = { .uri = "/generate_204", .method = HTTP_GET, .handler = handle_captive_redirect };
+    httpd_register_uri_handler(server, &uri_generate_204);
+
+    httpd_uri_t uri_hotspot = { .uri = "/hotspot-detect.html", .method = HTTP_GET, .handler = handle_captive_redirect };
+    httpd_register_uri_handler(server, &uri_hotspot);
+
+    httpd_uri_t uri_ncsi = { .uri = "/ncsi.txt", .method = HTTP_GET, .handler = handle_captive_redirect };
+    httpd_register_uri_handler(server, &uri_ncsi);
+
+    // Now register the catch-all static handler LAST
     httpd_uri_t uri_static = { .uri = "/*",  .method = HTTP_GET,  .handler = handle_static };
     httpd_register_uri_handler(server, &uri_static);
 
-    ESP_LOGI(TAG, "HTTP config server running");
+    // 404 handler for captive portal
+    httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, http_404_error_handler);
+
+    ESP_LOGI(TAG, "HTTP config server running (with captive‐portal redirect)");
+
+    // Start DNS server for captive portal
+    dns_server_config_t dns_cfg = DNS_SERVER_CONFIG_SINGLE("*", "WIFI_AP_DEF");
+    start_dns_server(&dns_cfg);
+
     return ESP_OK;
 }

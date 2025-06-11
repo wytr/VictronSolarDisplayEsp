@@ -3,7 +3,9 @@ file(GLOB SOURCES "*.c")
 idf_component_register(
     SRCS       ${SOURCES}
     INCLUDE_DIRS "."
-    PRIV_REQUIRES 
+    PRIV_REQUIRES
+        dns_server
+        esp_netif 
         lvgl
         esp_lcd
         spi_flash
