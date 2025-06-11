@@ -175,6 +175,20 @@ python convert_screenshot.py framebuffer.raw output.png
 
 ---
 
+## AES Key Configuration via Captive Portal
+
+On first boot (or after a reset), the device creates a Wi-Fi access point (`VictronConfig`) and launches a captive portal. When you connect with your phone or computer, a popup or redirect will automatically open the configuration page. Here you can securely enter or update the 16-byte AES key (32 hex characters) required for decrypting Victron BLE data.
+
+<p align="center">
+  <img src="docs/images/keyconfig_mobile.png" alt="AES Key Configuration Captive Portal" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Captive Portal – AES Key Configuration:</b> Enter your 32-character AES key directly from your mobile device or computer. The interface is mobile-friendly and guides you through the process.
+</p>
+
+After saving the key, the device will reboot and begin displaying live data.
+
+---
+
 ## License
 
 This project is released under the MIT License. See `LICENSE` for details.
