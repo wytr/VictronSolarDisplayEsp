@@ -91,12 +91,53 @@ VictronSolarDisplayEsp/
 
 ## Screenshots
 
-Below are screenshots of the configuration page as seen on mobile and desktop:
+Below are screenshots of the device UI, showing both the Live tab and various Info tab configuration screens:
 
 <p align="center">
-  <img src="docs/keyconfig_mobile.png" alt="Key Config on Mobile" width="300" style="margin: 0 16px; display: inline-block;"/>
-  <img src="docs/keyconfig_responsive.png" alt="Key Config Responsive/Desktop" width="420" style="margin: 0 16px; display: inline-block;"/>
+  <img src="docs/images/victrondata.png" alt="Live Tab: Victron Data Overview" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Live Tab:</b> Shows real-time Victron data including battery voltage, current, load, solar yield, and system state.
 </p>
+
+<p align="center">
+  <img src="docs/images/ap-config.png" alt="Info Tab: AP Config" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Info Tab – AP Config:</b> Configure the Wi-Fi AP SSID, password, and enable/disable the access point.
+</p>
+
+<p align="center">
+  <img src="docs/images/screensaver.png" alt="Info Tab: Screensaver Settings" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Info Tab – Screensaver:</b> Adjust screensaver enable, brightness, and timeout settings.
+</p>
+
+<p align="center">
+  <img src="docs/images/mac-and-aes.png" alt="Info Tab: MAC and AES Key" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Info Tab – MAC & AES Key:</b> View and edit the AES key and see the current BLE MAC address. Save or reboot from here.
+</p>
+
+---
+
+## Framebuffer Screenshot Conversion
+
+You can capture a raw framebuffer screenshot from the device and convert it to a PNG image using the provided Python script.
+
+### 1. Download the raw framebuffer
+
+Use `curl` to fetch the framebuffer from the device's HTTP endpoint (replace the IP if needed):
+
+```bash
+curl http://192.168.4.1/screenshot -o framebuffer.raw
+```
+
+### 2. Convert to PNG
+
+Run the Python script to convert the raw framebuffer to a PNG image:
+
+```bash
+python convert_screenshot.py framebuffer.raw output.png
+```
 
 ---
 

@@ -1,5 +1,7 @@
 from PIL import Image
 import numpy as np
+import glob
+import os
 
 # ————————— CONFIG ——————————
 width, height = 480, 320    # your panel’s logical resolution
@@ -14,13 +16,7 @@ is_bgr = False
 sw_rotate = 0
 # ————————————————————————————
 
-# 1) load the two buffers
-with open("framebuffer.raw", "rb") as f:
-    raw = f.read(double_size)
-buf1 = raw[: width * height * bpp_bytes]
-buf2 = raw[width * height * bpp_bytes : 2 * width * height * bpp_bytes]
-
-def process_buffer(buf, suffix):
+def process_buffer(buf, suffix, out_prefix):
     arr = np.frombuffer(buf, dtype=">u2").reshape((height, width))
 
     # 3) undo LVGL’s software rotation
@@ -51,8 +47,16 @@ def process_buffer(buf, suffix):
             rgb[y, x] = decode_rgb565(int(arr[y, x]))
 
     img = Image.fromarray(rgb, mode="RGB")
-    img.save(f"screenshot_{suffix}.png")
-    print(f"→ wrote screenshot_{suffix}.png ({img_w}×{img_h})")
+    img.save(f"{out_prefix}_{suffix}.png")
+    print(f"→ wrote {out_prefix}_{suffix}.png ({img_w}×{img_h})")
 
-# Process both buffers
-process_buffer(buf1, "buf1")
+# Find all .raw files in the current directory
+for rawfile in glob.glob("*.raw"):
+    with open(rawfile, "rb") as f:
+        raw = f.read(double_size)
+    buf1 = raw[: width * height * bpp_bytes]
+    buf2 = raw[width * height * bpp_bytes : 2 * width * height * bpp_bytes]
+    out_prefix = os.path.splitext(os.path.basename(rawfile))[0]
+    process_buffer(buf1, "buf1", out_prefix)
+    if len(buf2) == width * height * bpp_bytes:
+        process_buffer(buf2, "buf2", out_prefix)
