@@ -42,6 +42,7 @@ static void brightness_slider_event_cb(lv_event_t *e);
 static void wifi_event_cb(lv_event_t *e);
 static void ap_checkbox_event_cb(lv_event_t *e);
 static void save_key_btn_event_cb(lv_event_t *e);
+static void reboot_btn_event_cb(lv_event_t *e);
 
 void ui_init(void) {
     // Initialize NVS
@@ -224,10 +225,21 @@ void ui_init(void) {
     lv_label_set_text(lkey, "AES Key:");
     lv_obj_align(lkey, LV_ALIGN_TOP_LEFT, 8, 320);
 
+    // --- Set AES key text area from NVS ---
+    uint8_t aes_key_bin[16] = {0};
+    char aes_key_hex[33] = {0};
+    if (load_aes_key(aes_key_bin) == ESP_OK) {
+        for (int i = 0; i < 16; ++i) {
+            sprintf(aes_key_hex + i * 2, "%02X", aes_key_bin[i]);
+        }
+    } else {
+        strcpy(aes_key_hex, "00000000000000000000000000000000");
+    }
+
     ta_key = lv_textarea_create(tab_info);
     lv_textarea_set_one_line(ta_key, true);
     lv_obj_set_width(ta_key, lv_pct(80));
-    lv_textarea_set_text(ta_key, "4B7178E64C828A262CDD5161E3404B7A");
+    lv_textarea_set_text(ta_key, aes_key_hex);
     lv_obj_align(ta_key, LV_ALIGN_TOP_LEFT, 8, 350);
     lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_FOCUSED, NULL);
     lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
@@ -236,22 +248,32 @@ void ui_init(void) {
 
     // --- Add Save button for AES Key ---
     lv_obj_t *btn_save_key = lv_btn_create(tab_info);
-    lv_obj_align(btn_save_key, LV_ALIGN_TOP_LEFT, 8, 380);
-    lv_obj_set_width(btn_save_key, lv_pct(40));
+    lv_obj_align(btn_save_key, LV_ALIGN_TOP_LEFT, 8, 400); // moved down by 50px
+    lv_obj_set_width(btn_save_key, lv_pct(18));
     lv_obj_t *lbl_btn = lv_label_create(btn_save_key);
     lv_label_set_text(lbl_btn, "Save");
     lv_obj_center(lbl_btn);
     lv_obj_add_event_cb(btn_save_key, save_key_btn_event_cb, LV_EVENT_CLICKED, NULL);
 
-    // Brightness slider
+    // --- Add Reboot button next to Save ---
+    lv_obj_t *btn_reboot = lv_btn_create(tab_info);
+    lv_obj_align(btn_reboot, LV_ALIGN_TOP_LEFT, 8 + lv_pct(20), 400); // right of Save
+    lv_obj_set_width(btn_reboot, lv_pct(18));
+    lv_obj_t *lbl_reboot = lv_label_create(btn_reboot);
+    lv_label_set_text(lbl_reboot, "Reboot");
+    lv_obj_center(lbl_reboot);
+    lv_obj_add_event_cb(btn_reboot, reboot_btn_event_cb, LV_EVENT_CLICKED, NULL);
+
+    // Brightness slider label
     lv_obj_t *lbl_brightness = lv_label_create(tab_info);
     lv_obj_add_style(lbl_brightness, &style_title, 0);
     lv_label_set_text(lbl_brightness, "Brightness:");
-    lv_obj_align(lbl_brightness, LV_ALIGN_TOP_LEFT, 8, 390);
+    lv_obj_align(lbl_brightness, LV_ALIGN_TOP_LEFT, 8, 450); // moved down by 50px
 
+    // Brightness slider
     lv_obj_t *slider = lv_slider_create(tab_info);
     lv_obj_set_width(slider, lv_pct(80));
-    lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 8, 420);
+    lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 8, 500); // moved down by 50px
     lv_slider_set_range(slider, 1, 100);
     lv_slider_set_value(slider, brightness, LV_ANIM_OFF); // set loaded value
     bsp_display_brightness_set(brightness); // set display brightness
@@ -260,7 +282,7 @@ void ui_init(void) {
     // Add extra space at the bottom
     lv_obj_t *spacer = lv_obj_create(tab_info);
     lv_obj_set_size(spacer, 10, 40);
-    lv_obj_align(spacer, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_align(spacer, LV_ALIGN_TOP_LEFT, 8, 550); // moved down by 50px
     lv_obj_add_flag(spacer, LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_EVENT_BUBBLE);
 
     lv_obj_add_event_cb(cb_ap_enable, ap_checkbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
@@ -435,6 +457,11 @@ static void save_key_btn_event_cb(lv_event_t *e) {
         ESP_LOGE(TAG_UI, "Failed to save AES key");
         // Optionally show a failure message
     }
+}
+
+static void reboot_btn_event_cb(lv_event_t *e) {
+    ESP_LOGI(TAG_UI, "Reboot requested via UI");
+    esp_restart();
 }
 
 void ui_set_ble_mac(const uint8_t *mac) {
