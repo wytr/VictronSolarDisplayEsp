@@ -7,6 +7,19 @@
   <title>Victron AES Key Config</title>
   <link rel="icon" href="/favicon.ico"/>
   <link rel="stylesheet" href="/style.css"/>
+  <style>
+    @media (max-width: 600px) {
+      .center-content {
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        transition: margin 0.3s;
+      }
+      body:not(.keyboard-open) .center-content {
+        margin-top: 8rem;
+        margin-bottom: 8rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="wobble-bg"></div>
@@ -31,8 +44,10 @@
              name="key"
              minlength="32"
              maxlength="32"
+             pattern="[0-9A-Fa-f]{32}"
              placeholder="4B7178E64C828A262CDD5161E3404B7A"
-             required/><br/>
+             required
+             autocomplete="off"/><br/>
       <button type="submit">Save Key</button>
     </form>
     <div id="response"></div>
@@ -54,7 +69,7 @@
   <!-- 3D cube & particle scripts -->
   <script>
 function triggerSpiralParticleCollect() {
-    const particleCount = 30;
+    const particleCount = 45;
     const particlesContainer = document.querySelector('.particles');
     for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
@@ -108,7 +123,7 @@ function triggerExplosion(element) {
 
 // Initial floating particles
 document.addEventListener("DOMContentLoaded", function() {
-    const particleCount = 20;
+    const particleCount = 30;
     const particlesContainer = document.querySelector('.particles');
     for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
@@ -161,5 +176,94 @@ document.addEventListener('click', function(e) {
     }
 });
   </script>
+  <script>
+(function() {
+  // Only run on mobile
+  if (window.innerWidth > 600) return;
+
+  let lastHeight = window.innerHeight;
+  window.addEventListener('resize', function() {
+    // If the height shrinks by more than 150px, assume keyboard is open
+    if (window.innerHeight < lastHeight - 150) {
+      document.body.classList.add('keyboard-open');
+    } else if (window.innerHeight >= lastHeight - 50) {
+      document.body.classList.remove('keyboard-open');
+    }
+    lastHeight = window.innerHeight;
+  });
+})();
+</script>
+<script>
+function hexCharExplosionAround(el) {
+    // Use all hex characters in order
+    const chars = "0123456789ABCDEF";
+    const rect = el.getBoundingClientRect();
+    const formCenterX = rect.left + rect.width / 2;
+    const formBottomY = rect.bottom;
+    const particleCount = chars.length;
+    const duration = 0.7; // seconds for each char's animation
+
+    for (let i = 0; i < particleCount; i++) {
+        setTimeout(() => {
+            const span = document.createElement('span');
+            span.className = 'hex-char-particle pop-up';
+            span.textContent = chars[i];
+
+            // Place at bottom center of form
+            span.style.left = (formCenterX) + "px";
+            span.style.top = (formBottomY + window.scrollY + 8) + "px";
+            span.style.setProperty('--duration', `${duration}s`);
+
+            document.body.appendChild(span);
+
+            // Remove after animation
+            span.addEventListener('animationend', () => span.remove(), {once: true});
+        }, i * duration * 1000); // Next char starts after previous finishes
+    }
+}
+
+function hexCharHint(el) {
+    // Remove any existing hint
+    document.querySelectorAll('.hex-char-hint').forEach(e => e.remove());
+
+    const chars = "0123456789ABCDEF";
+    const rect = el.getBoundingClientRect();
+    const formCenterX = rect.left + rect.width / 2;
+    const formTopY = rect.top;
+
+    const span = document.createElement('span');
+    span.className = 'hex-char-hint';
+    span.textContent = chars;
+
+    // Center above the form
+    span.style.position = 'fixed';
+    span.style.left = `${formCenterX}px`;
+    span.style.top = `${formTopY - 100}px`;
+    span.style.transform = 'translate(-50%, 0)';
+    span.style.zIndex = 10;
+
+    document.body.appendChild(span);
+
+    // Remove after animation
+    setTimeout(() => span.remove(), 5000);
+}
+
+// Hook into your input validation
+const keyInput = document.getElementById('key');
+const keyForm = document.getElementById('keyForm');
+keyInput.addEventListener('input', function(e) {
+    let val = keyInput.value.toUpperCase().replace(/[^0-9A-F]/g, '');
+    if (val !== keyInput.value.toUpperCase()) {
+        keyInput.value = val;
+        keyForm.classList.remove('red-glow');
+        void keyForm.offsetWidth;
+        keyForm.classList.add('red-glow');
+        hexCharHint(keyForm); // <-- show hex char hint
+    }
+});
+keyForm.addEventListener('animationend', function() {
+    keyForm.classList.remove('red-glow');
+});
+</script>
 </body>
 </html>

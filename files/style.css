@@ -133,3 +133,184 @@ h1 {
   position: relative;
   z-index: 2;
 }
+
+#keyForm.red-glow {
+  animation: redGlow 0.6s;
+}
+@keyframes redGlow {
+  0%   { box-shadow: 0 0 0px 0px #ff0033; }
+  30%  { box-shadow: 0 0 12px 4px #ff0033; }
+  70%  { box-shadow: 0 0 12px 4px #ff0033; }
+  100% { box-shadow: 0 0 0px 0px #ff0033; }
+}
+
+.hex-char-particle {
+  position: fixed;
+  font-size: 2.2rem;
+  font-family: monospace;
+  color: #ff0033;
+  opacity: 0.85;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1; /* Behind the form */
+  left: 0; top: 0;
+  will-change: transform, opacity;
+  animation: hexCharExplosion 2.2s forwards cubic-bezier(.25,.46,.45,.94);
+}
+
+@keyframes hexCharExplosion {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    /* Initial burst outwards */
+    transform: translate(var(--x), var(--y)) scale(1.2) rotate(var(--rot));
+  }
+  60% {
+    opacity: 1;
+    /* Start falling, still moving outwards */
+    transform: translate(var(--x), var(--y2)) scale(1.1) rotate(var(--rot));
+  }
+  100% {
+    opacity: 0;
+    /* Fall to bottom of screen */
+    transform: translate(var(--xFinal), var(--yFinal)) scale(0.9) rotate(var(--rotEnd));
+  }
+}
+
+.hex-char-particle.arc-pop {
+  position: fixed;
+  font-size: 2.2rem;
+  font-family: monospace;
+  color: #ff0033;
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  left: 0; top: 0;
+  transform: translate(0,0);
+  animation: arcPop var(--duration,1.2s) cubic-bezier(.42,0,.58,1) both;
+  animation-delay: var(--delay,0s);
+}
+@keyframes arcPop {
+  0% {
+    opacity: 0;
+    transform: translate(0,0) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0,0) scale(1.1);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(var(--arcX), var(--arcY)) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(var(--arcX), var(--arcY)) scale(1);
+  }
+}
+.hex-char-particle.arc-pop.arc-hide {
+  animation: arcHide 0.5s cubic-bezier(.42,0,.58,1) both;
+}
+@keyframes arcHide {
+  0% {
+    opacity: 1;
+    transform: translate(var(--arcX), var(--arcY)) scale(1);
+  }
+  60% {
+    opacity: 0.7;
+    transform: translate(var(--arcBackX), var(--arcBackY)) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0,0) scale(0.5);
+  }
+}
+
+.hex-char-particle.simple-pop {
+  position: fixed;
+  font-size: 2.2rem;
+  font-family: monospace;
+  color: #ff0033;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  left: 0; top: 0;
+  transform: translate(-50%, -50%);
+  animation: simplePop var(--duration,0.8s) ease both;
+  animation-delay: var(--delay,0s);
+}
+@keyframes simplePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+}
+
+.hex-char-particle.pop-up {
+  position: fixed;
+  font-size: 2.2rem;
+  font-family: monospace;
+  color: #ff0033;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  left: 0; top: 0;
+  transform: translate(-50%, 0) scale(0.7);
+  animation: popUpFade var(--duration,0.7s) cubic-bezier(.42,0,.58,1) both;
+}
+@keyframes popUpFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1.25);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -40px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -80px) scale(0.8);
+  }
+}
+
+.hex-char-hint {
+  font-family: monospace;
+  font-size: 1.4rem;
+  color: #ff0033;
+  background: rgba(30,30,30,0.95);
+  border-radius: 6px;
+  padding: 0.2em 0.7em;
+  box-shadow: 0 2px 12px #ff003355;
+  opacity: 0;
+  animation: hexHintFade 5s forwards;
+  pointer-events: none;
+  user-select: none;
+}
+@keyframes hexHintFade {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.95);}
+  10%  { opacity: 1; transform: translate(-50%, -6px) scale(1.08);}
+  80%  { opacity: 1; transform: translate(-50%, -6px) scale(1);}
+  100% { opacity: 0; transform: translate(-50%, 0) scale(0.95);}
+}
