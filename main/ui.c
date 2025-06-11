@@ -41,7 +41,7 @@ static lv_obj_t *ta_ssid, *ta_password, *cb_ap_enable;
 static lv_obj_t *cb_screensaver, *slider_ss_brightness, *spinbox_ss_time;
 static bool screensaver_enabled = false;
 static uint8_t screensaver_brightness = 1;
-static uint16_t screensaver_timeout = 60; // seconds
+static uint16_t screensaver_timeout = 10;
 static lv_timer_t *screensaver_timer = NULL;
 static bool screensaver_active = false;
 
