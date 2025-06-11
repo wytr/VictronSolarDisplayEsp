@@ -92,6 +92,11 @@ VictronSolarDisplayEsp/
 * [LVGL](https://lvgl.io/) and Espressif LVGL port
 * AES CTR mode from `esp_aes`
 
+##TODO
+
+* Make local AES-Key config on info tab functional (dummy textbox atm)
+* Add mac address to nvs and show on info tab
+
 ## License
 
 This project is released under the MIT License. See `LICENSE` for details.
