@@ -20,6 +20,7 @@ void ui_init(void);
  * @param d Pointer to the victronPanelData_t structure containing sensor readings.
  */
 void ui_on_panel_data(const victronPanelData_t *d);
+void ui_set_ble_mac(const uint8_t *mac);
 
 #ifdef __cplusplus
 }

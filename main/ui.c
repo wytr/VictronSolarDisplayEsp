@@ -12,6 +12,7 @@
 #include "config_storage.h"
 #include "config_server.h"
 #include "esp_wifi.h"
+#include <stdio.h>
 
 // NVS namespace for Wi-Fi
 #define WIFI_NAMESPACE "wifi"
@@ -40,6 +41,7 @@ static void ta_event_cb(lv_event_t *e);
 static void brightness_slider_event_cb(lv_event_t *e);
 static void wifi_event_cb(lv_event_t *e);
 static void ap_checkbox_event_cb(lv_event_t *e);
+static void save_key_btn_event_cb(lv_event_t *e);
 
 void ui_init(void) {
     // Initialize NVS
@@ -232,6 +234,15 @@ void ui_init(void) {
     lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_CANCEL, NULL);
     lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_READY, NULL);
 
+    // --- Add Save button for AES Key ---
+    lv_obj_t *btn_save_key = lv_btn_create(tab_info);
+    lv_obj_align(btn_save_key, LV_ALIGN_TOP_LEFT, 8, 380);
+    lv_obj_set_width(btn_save_key, lv_pct(40));
+    lv_obj_t *lbl_btn = lv_label_create(btn_save_key);
+    lv_label_set_text(lbl_btn, "Save");
+    lv_obj_center(lbl_btn);
+    lv_obj_add_event_cb(btn_save_key, save_key_btn_event_cb, LV_EVENT_CLICKED, NULL);
+
     // Brightness slider
     lv_obj_t *lbl_brightness = lv_label_create(tab_info);
     lv_obj_add_style(lbl_brightness, &style_title, 0);
@@ -403,6 +414,36 @@ static void ap_checkbox_event_cb(lv_event_t *e) {
         // (optionally)
         // esp_wifi_deinit();
     }
+}
+
+static void save_key_btn_event_cb(lv_event_t *e) {
+    const char *hex = lv_textarea_get_text(ta_key);
+    if (strlen(hex) != 32) {
+        ESP_LOGE(TAG_UI, "AES key must be 32 hex chars");
+        // Optionally show a message box or error label
+        return;
+    }
+    uint8_t key[16];
+    for (int i = 0; i < 16; i++) {
+        char tmp[3] = { hex[i*2], hex[i*2+1], 0 };
+        key[i] = (uint8_t)strtol(tmp, NULL, 16);
+    }
+    if (save_aes_key(key) == ESP_OK) {
+        ESP_LOGI(TAG_UI, "AES key saved via UI");
+        // Optionally show a success message
+    } else {
+        ESP_LOGE(TAG_UI, "Failed to save AES key");
+        // Optionally show a failure message
+    }
+}
+
+void ui_set_ble_mac(const uint8_t *mac) {
+    // Format MAC as "XX:XX:XX:XX:XX:XX"
+    char mac_str[18];
+    snprintf(mac_str, sizeof(mac_str),
+             "%02X:%02X:%02X:%02X:%02X:%02X",
+             mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
+    lv_textarea_set_text(ta_mac, mac_str);
 }
 
 
