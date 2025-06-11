@@ -72,7 +72,11 @@ void ui_init(void) {
     tab_info = lv_tabview_add_tab(tabview, "Info");
 
     // Keyboard for textareas
-    kb = lv_keyboard_create(tab_info);
+    kb = lv_keyboard_create(lv_layer_top());
+    lv_obj_set_size(kb, LV_HOR_RES, LV_VER_RES/2);
+    lv_obj_align(kb, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+
     lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
 
     // Styles
@@ -150,66 +154,17 @@ void ui_init(void) {
     lv_label_set_text(lbl_load_watt, "");
     lv_obj_align(lbl_load_watt, LV_ALIGN_BOTTOM_RIGHT, -31, -8);
 
-    // Info tab: error, MAC, AES Key
-    lbl_error = lv_label_create(tab_info);
-    lv_obj_add_style(lbl_error, &style_title, 0);
-    lv_label_set_text(lbl_error, "Err: 0");
-    lv_obj_align(lbl_error, LV_ALIGN_BOTTOM_LEFT, 8, -24);
-
-    lv_obj_t *lmac = lv_label_create(tab_info);
-    lv_obj_add_style(lmac, &style_title, 0);
-    lv_label_set_text(lmac, "MAC Address:");
-    lv_obj_align(lmac, LV_ALIGN_TOP_LEFT, 8, 8);
-
-    ta_mac = lv_textarea_create(tab_info);
-    lv_textarea_set_one_line(ta_mac, true);
-    lv_obj_set_width(ta_mac, lv_pct(80));
-    lv_textarea_set_text(ta_mac, "00:00:00:00:00:00");
-    lv_obj_align(ta_mac, LV_ALIGN_TOP_LEFT, 8, 32);
-    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_FOCUSED, NULL);
-    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
-    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_CANCEL, NULL);
-    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_READY, NULL);
-
-    lv_obj_t *lkey = lv_label_create(tab_info);
-    lv_obj_add_style(lkey, &style_title, 0);
-    lv_label_set_text(lkey, "AES Key:");
-    lv_obj_align(lkey, LV_ALIGN_TOP_LEFT, 8, 72);
-
-    ta_key = lv_textarea_create(tab_info);
-    lv_textarea_set_one_line(ta_key, true);
-    lv_obj_set_width(ta_key, lv_pct(80));
-    lv_textarea_set_text(ta_key, "4B7178E64C828A262CDD5161E3404B7A");
-    lv_obj_align(ta_key, LV_ALIGN_TOP_LEFT, 8, 96);
-    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_FOCUSED, NULL);
-    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
-    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_CANCEL, NULL);
-    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_READY, NULL);
-
-    // Brightness slider
-    lv_obj_t *lbl_brightness = lv_label_create(tab_info);
-    lv_obj_add_style(lbl_brightness, &style_title, 0);
-    lv_label_set_text(lbl_brightness, "Brightness:");
-    lv_obj_align(lbl_brightness, LV_ALIGN_TOP_LEFT, 8, 136);
-
-    lv_obj_t *slider = lv_slider_create(tab_info);
-    lv_obj_set_width(slider, lv_pct(80));
-    lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 8, 160);
-    lv_slider_set_range(slider, 1, 100);
-    lv_slider_set_value(slider, 5, LV_ANIM_OFF);
-    lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-
     // Wi-Fi SSID
     lv_obj_t *lbl_ssid = lv_label_create(tab_info);
     lv_obj_add_style(lbl_ssid, &style_title, 0);
     lv_label_set_text(lbl_ssid, "AP SSID:");
-    lv_obj_align(lbl_ssid, LV_ALIGN_TOP_LEFT, 8, 200);
+    lv_obj_align(lbl_ssid, LV_ALIGN_TOP_LEFT, 8, 20);
 
     ta_ssid = lv_textarea_create(tab_info);
     lv_textarea_set_one_line(ta_ssid, true);
     lv_obj_set_width(ta_ssid, lv_pct(80));
     lv_textarea_set_text(ta_ssid, default_ssid);
-    lv_obj_align(ta_ssid, LV_ALIGN_TOP_LEFT, 8, 224);
+    lv_obj_align(ta_ssid, LV_ALIGN_TOP_LEFT, 8, 50);
     lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_FOCUSED, NULL);
     lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
     lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_CANCEL, NULL);
@@ -220,14 +175,14 @@ void ui_init(void) {
     lv_obj_t *lbl_pass = lv_label_create(tab_info);
     lv_obj_add_style(lbl_pass, &style_title, 0);
     lv_label_set_text(lbl_pass, "AP Password:");
-    lv_obj_align(lbl_pass, LV_ALIGN_TOP_LEFT, 8, 264);
+    lv_obj_align(lbl_pass, LV_ALIGN_TOP_LEFT, 8, 90);
 
     ta_password = lv_textarea_create(tab_info);
     lv_textarea_set_password_mode(ta_password, true);
     lv_textarea_set_one_line(ta_password, true);
     lv_obj_set_width(ta_password, lv_pct(80));
     lv_textarea_set_text(ta_password, default_pass);
-    lv_obj_align(ta_password, LV_ALIGN_TOP_LEFT, 8, 288);
+    lv_obj_align(ta_password, LV_ALIGN_TOP_LEFT, 8, 120);
     lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_FOCUSED, NULL);
     lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
     lv_obj_add_event_cb(ta_password, ta_event_cb, LV_EVENT_CANCEL, NULL);
@@ -238,7 +193,63 @@ void ui_init(void) {
     cb_ap_enable = lv_checkbox_create(tab_info);
     lv_checkbox_set_text(cb_ap_enable, "Enable AP");
     if (ap_enabled) lv_obj_add_state(cb_ap_enable, LV_STATE_CHECKED);
-    lv_obj_align(cb_ap_enable, LV_ALIGN_TOP_LEFT, 8, 332);
+    lv_obj_align(cb_ap_enable, LV_ALIGN_TOP_LEFT, 8, 170);
+
+    // Info tab: error, MAC, AES Key
+    lbl_error = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_error, &style_title, 0);
+    lv_label_set_text(lbl_error, "Err: 0");
+    lv_obj_align(lbl_error, LV_ALIGN_TOP_LEFT, 8, 210);
+
+    lv_obj_t *lmac = lv_label_create(tab_info);
+    lv_obj_add_style(lmac, &style_title, 0);
+    lv_label_set_text(lmac, "MAC Address:");
+    lv_obj_align(lmac, LV_ALIGN_TOP_LEFT, 8, 250);
+
+    ta_mac = lv_textarea_create(tab_info);
+    lv_textarea_set_one_line(ta_mac, true);
+    lv_obj_set_width(ta_mac, lv_pct(80));
+    lv_textarea_set_text(ta_mac, "00:00:00:00:00:00");
+    lv_obj_align(ta_mac, LV_ALIGN_TOP_LEFT, 8, 280);
+    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_FOCUSED, NULL);
+    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
+    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_CANCEL, NULL);
+    lv_obj_add_event_cb(ta_mac, ta_event_cb, LV_EVENT_READY, NULL);
+
+    lv_obj_t *lkey = lv_label_create(tab_info);
+    lv_obj_add_style(lkey, &style_title, 0);
+    lv_label_set_text(lkey, "AES Key:");
+    lv_obj_align(lkey, LV_ALIGN_TOP_LEFT, 8, 320);
+
+    ta_key = lv_textarea_create(tab_info);
+    lv_textarea_set_one_line(ta_key, true);
+    lv_obj_set_width(ta_key, lv_pct(80));
+    lv_textarea_set_text(ta_key, "4B7178E64C828A262CDD5161E3404B7A");
+    lv_obj_align(ta_key, LV_ALIGN_TOP_LEFT, 8, 350);
+    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_FOCUSED, NULL);
+    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
+    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_CANCEL, NULL);
+    lv_obj_add_event_cb(ta_key, ta_event_cb, LV_EVENT_READY, NULL);
+
+    // Brightness slider
+    lv_obj_t *lbl_brightness = lv_label_create(tab_info);
+    lv_obj_add_style(lbl_brightness, &style_title, 0);
+    lv_label_set_text(lbl_brightness, "Brightness:");
+    lv_obj_align(lbl_brightness, LV_ALIGN_TOP_LEFT, 8, 390);
+
+    lv_obj_t *slider = lv_slider_create(tab_info);
+    lv_obj_set_width(slider, lv_pct(80));
+    lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 8, 420);
+    lv_slider_set_range(slider, 1, 100);
+    lv_slider_set_value(slider, 5, LV_ANIM_OFF);
+    lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+
+    // Add extra space at the bottom
+    lv_obj_t *spacer = lv_obj_create(tab_info);
+    lv_obj_set_size(spacer, 10, 40);
+    lv_obj_align(spacer, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_add_flag(spacer, LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_EVENT_BUBBLE);
+
     lv_obj_add_event_cb(cb_ap_enable, ap_checkbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
     lvgl_port_unlock();
