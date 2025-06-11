@@ -39,9 +39,9 @@ static lv_obj_t *ta_ssid, *ta_password, *cb_ap_enable;
 
 // --- Screensaver settings state ---
 static lv_obj_t *cb_screensaver, *slider_ss_brightness, *spinbox_ss_time;
-static bool screensaver_enabled = false;
-static uint8_t screensaver_brightness = 1;
-static uint16_t screensaver_timeout = 10;
+static bool screensaver_enabled;
+static uint8_t screensaver_brightness;
+static uint16_t screensaver_timeout;
 static lv_timer_t *screensaver_timer = NULL;
 static bool screensaver_active = false;
 
@@ -81,6 +81,8 @@ void ui_init(void) {
         default_pass[0] = '\0';
         ap_enabled = 1;
     }
+
+    load_screensaver_settings(&screensaver_enabled, &screensaver_brightness, &screensaver_timeout);
 
     // Initialize theme
 #if LV_USE_THEME_DEFAULT
@@ -321,6 +323,7 @@ void ui_init(void) {
     // Screensaver Enable Checkbox
     cb_screensaver = lv_checkbox_create(tab_info);
     lv_checkbox_set_text(cb_screensaver, "Enable Screensaver");
+    if (screensaver_enabled) lv_obj_add_state(cb_screensaver, LV_STATE_CHECKED); // reflect default
     lv_obj_align(cb_screensaver, LV_ALIGN_TOP_LEFT, 8, 600);
     lv_obj_add_event_cb(cb_screensaver, cb_screensaver_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
@@ -370,7 +373,12 @@ void ui_init(void) {
 
     // Screensaver timer setup
     screensaver_timer = lv_timer_create(screensaver_timer_cb, screensaver_timeout * 1000, NULL);
-    lv_timer_pause(screensaver_timer); // Start paused
+    if (screensaver_enabled) {
+        lv_timer_reset(screensaver_timer);
+        lv_timer_resume(screensaver_timer);
+    } else {
+        lv_timer_pause(screensaver_timer); // Start paused if not enabled
+    }
 
     // Touch event: wake/reset screensaver timer
     lv_obj_add_event_cb(lv_scr_act(), tabview_touch_event_cb, LV_EVENT_PRESSED, NULL);
@@ -605,29 +613,27 @@ static void screensaver_wake(void) {
 // Screensaver UI event callbacks
 static void cb_screensaver_event_cb(lv_event_t *e) {
     screensaver_enabled = lv_obj_has_state(cb_screensaver, LV_STATE_CHECKED);
+    save_screensaver_settings(screensaver_enabled, screensaver_brightness, screensaver_timeout);
     screensaver_enable(screensaver_enabled);
 }
 
 static void slider_ss_brightness_event_cb(lv_event_t *e) {
     screensaver_brightness = lv_slider_get_value(slider_ss_brightness);
+    save_screensaver_settings(screensaver_enabled, screensaver_brightness, screensaver_timeout);
 }
 
 static void spinbox_ss_time_event_cb(lv_event_t *e) {
     screensaver_timeout = lv_spinbox_get_value(spinbox_ss_time);
+    save_screensaver_settings(screensaver_enabled, screensaver_brightness, screensaver_timeout);
     if (screensaver_timer) lv_timer_set_period(screensaver_timer, screensaver_timeout * 1000);
 }
 
-// Add this callback implementation at file scope:
-static void tabview_touch_event_cb(lv_event_t *e) {
-    screensaver_wake();
-}
-
-// Add these callbacks at file scope:
 static void spinbox_ss_time_increment_event_cb(lv_event_t *e) {
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
         lv_spinbox_increment(spinbox_ss_time);
         screensaver_timeout = lv_spinbox_get_value(spinbox_ss_time);
+        save_screensaver_settings(screensaver_enabled, screensaver_brightness, screensaver_timeout);
         if (screensaver_timer) lv_timer_set_period(screensaver_timer, screensaver_timeout * 1000);
     }
 }
@@ -637,8 +643,14 @@ static void spinbox_ss_time_decrement_event_cb(lv_event_t *e) {
     if(code == LV_EVENT_SHORT_CLICKED || code == LV_EVENT_LONG_PRESSED_REPEAT) {
         lv_spinbox_decrement(spinbox_ss_time);
         screensaver_timeout = lv_spinbox_get_value(spinbox_ss_time);
+        save_screensaver_settings(screensaver_enabled, screensaver_brightness, screensaver_timeout);
         if (screensaver_timer) lv_timer_set_period(screensaver_timer, screensaver_timeout * 1000);
     }
+}
+
+// Add this callback implementation at file scope:
+static void tabview_touch_event_cb(lv_event_t *e) {
+    screensaver_wake();
 }
 
 
