@@ -73,7 +73,7 @@ h1 {
 
 /* AES form styling */
 #keyForm {
-  max-width: 300px; margin: 1rem auto;
+  max-width: 400px; margin: 1rem auto;
   background: #1e1e1e; padding:1rem; border-radius:8px;
   box-shadow:0 0 10px rgba(0,122,204,0.5); /* blue shadow */
 }
@@ -82,7 +82,7 @@ h1 {
   color:#E0E0E0;
 }
 #keyForm input[type="text"] {
-  width:100%; padding:0.5rem; margin-bottom:1rem;
+  width:90%; padding:0.5rem; margin-bottom:1rem;
   background:#2e2e2e; border:1px solid #555; color:#E0E0E0;
   border-radius:4px; font-size:1rem;
 }
@@ -93,3 +93,26 @@ h1 {
 }
 #keyForm button:hover { background:#005f99; }
 #response { margin-top:1rem; font-size:0.9rem; text-align:center; }
+
+/* Blurred wobble background at bottom */
+.wobble-bg {
+  position: fixed;
+  left: 50%;
+  bottom: -100px;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 300px;
+  background: radial-gradient(ellipse at center, #007acc 60%, transparent 100%);
+  filter: blur(80px) brightness(1.2);
+  opacity: 0.45;
+  z-index: 0;
+  pointer-events: none;
+  animation: wobbleMove 12s ease-in-out infinite alternate;
+}
+
+@keyframes wobbleMove {
+  0%   { transform: translateX(-50%) scale(1,1) rotate(-2deg);}
+  40%  { transform: translateX(-48%) scale(1.1,0.95) rotate(2deg);}
+  60%  { transform: translateX(-52%) scale(0.95,1.1) rotate(-3deg);}
+  100% { transform: translateX(-50%) scale(1.05,1) rotate(2deg);}
+}

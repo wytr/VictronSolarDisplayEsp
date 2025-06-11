@@ -9,13 +9,12 @@
   <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
-
+  <div class="wobble-bg"></div>
   <!-- 3D Cube + Particles -->
   <div class="cube-container">
     <div class="particles"></div>
     <div class="cube">
-      <div class="face front">
-      </div>
+      <div class="face front"></div>
       <div class="face back"></div>
       <div class="face right"></div>
       <div class="face left"></div>
@@ -23,26 +22,24 @@
       <div class="face bottom"></div>
     </div>
   </div>
-
-  <h1>Victron AES Key Configuration</h1>
-
-  <!-- AES Key Form -->
-  <form id="keyForm">
-    <label for="key">Enter 16-byte AES Key (32 hex chars):</label><br/>
-    <input type="text"
-           id="key"
-           name="key"
-           maxlength="32"
-           placeholder="4B7178E64C828A262CDD5161E3404B7A"
-           required/><br/>
-    <button type="submit">Save Key</button>
-  </form>
-
-  <div id="response"></div>
-
+  <div class="center-content">
+    <h1>Victron AES Key Configuration</h1>
+    <!-- AES Key Form -->
+    <form id="keyForm">
+      <label for="key">Enter 16-byte AES Key (32 hex chars):</label><br/>
+      <input type="text"
+             id="key"
+             name="key"
+             minlength="32"
+             maxlength="32"
+             placeholder="4B7178E64C828A262CDD5161E3404B7A"
+             required/><br/>
+      <button type="submit">Save Key</button>
+    </form>
+    <div id="response"></div>
+  </div>
   <!-- jQuery -->
   <script src="/js/jquery-3.7.1.js"></script>
-
   <!-- Form submit + trigger animations -->
   <script>
     $('#keyForm').on('submit', function(e) {
@@ -55,7 +52,6 @@
       setTimeout(triggerSpiralParticleCollect, 4000);
     });
   </script>
-
   <!-- 3D cube & particle scripts -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -122,6 +118,24 @@
       }
     }
   </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      /* ... */
+    }
 
+    .center-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 2rem;
+    }
+  </style>
 </body>
 </html>
