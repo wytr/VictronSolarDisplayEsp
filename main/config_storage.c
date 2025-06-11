@@ -6,6 +6,32 @@
 #define AES_NAMESPACE  "victron"
 #define AES_KEY        "aes_key"
 #define WIFI_NAMESPACE "wifi"
+#define BRIGHTNESS_NAMESPACE "display"
+#define BRIGHTNESS_KEY       "brightness"
+
+esp_err_t load_brightness(uint8_t *brightness_out) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(BRIGHTNESS_NAMESPACE, NVS_READWRITE, &h);
+    if (err != ESP_OK) return err;
+    err = nvs_get_u8(h, BRIGHTNESS_KEY, brightness_out);
+    if (err != ESP_OK) {
+        *brightness_out = 5; // default value
+        nvs_set_u8(h, BRIGHTNESS_KEY, *brightness_out);
+        nvs_commit(h);
+    }
+    nvs_close(h);
+    return ESP_OK;
+}
+
+esp_err_t save_brightness(uint8_t brightness) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(BRIGHTNESS_NAMESPACE, NVS_READWRITE, &h);
+    if (err != ESP_OK) return err;
+    err = nvs_set_u8(h, BRIGHTNESS_KEY, brightness);
+    if (err == ESP_OK) err = nvs_commit(h);
+    nvs_close(h);
+    return err;
+}
 
 esp_err_t load_aes_key(uint8_t key_out[16]) {
     nvs_handle_t h;

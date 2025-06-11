@@ -44,7 +44,8 @@ static void ap_checkbox_event_cb(lv_event_t *e);
 void ui_init(void) {
     // Initialize NVS
     nvs_flash_init();
-
+    uint8_t brightness = 5;
+    load_brightness(&brightness);
     // Load defaults from storage
     char default_ssid[33]; size_t ssid_len = sizeof(default_ssid);
     char default_pass[65]; size_t pass_len = sizeof(default_pass);
@@ -241,7 +242,8 @@ void ui_init(void) {
     lv_obj_set_width(slider, lv_pct(80));
     lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 8, 420);
     lv_slider_set_range(slider, 1, 100);
-    lv_slider_set_value(slider, 5, LV_ANIM_OFF);
+    lv_slider_set_value(slider, brightness, LV_ANIM_OFF); // set loaded value
+    bsp_display_brightness_set(brightness); // set display brightness
     lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
     // Add extra space at the bottom
@@ -353,6 +355,7 @@ static void ta_event_cb(lv_event_t *e) {
 static void brightness_slider_event_cb(lv_event_t *e) {
     int val = lv_slider_get_value(lv_event_get_target(e));
     bsp_display_brightness_set(val);
+    save_brightness((uint8_t)val); // Persist to NVS
     ESP_LOGI(TAG_UI, "Brightness set to %d", val);
 }
 
