@@ -82,9 +82,21 @@ VictronSolarDisplayEsp/
 5. **Interact**:
 
    - On first boot, the device sets up a SoftAP `VictronConfig` (no password). Connect to it.
-   - Browse to [http://192.168.4.1/](http://192.168.4.1/) to configure the AES key via web UI.
+   - **Captive Portal:** When you connect with an Android or iPhone, a popup will automatically appear, directing you to the configuration page (index.html). This makes setup fast and easy—no need to manually enter the IP address!
+   - You can also browse to [http://192.168.4.1/](http://192.168.4.1/) to configure the AES key via web UI.
    - Alternatively, use the Info tab on the device to enter and save the AES key.
    - After saving, the device reboots and begins displaying live BLE data.
+
+---
+
+## Screenshots
+
+Below are screenshots of the configuration page as seen on mobile and desktop:
+
+<p align="center">
+  <img src="docs/keyconfig_mobile.png" alt="Key Config on Mobile" width="300" style="margin: 0 16px; display: inline-block;"/>
+  <img src="docs/keyconfig_responsive.png" alt="Key Config Responsive/Desktop" width="420" style="margin: 0 16px; display: inline-block;"/>
+</p>
 
 ---
 
