@@ -19,6 +19,7 @@
 #include "esp_netif_types.h"
 #include "dns_server.h" 
 #include <lwip/inet.h>
+#include "lvgl.h"
 
 static const char *TAG = "cfg_srv";
 
@@ -281,6 +282,22 @@ static esp_err_t handle_captive_redirect(httpd_req_t *req) {
     return serve_from_spiffs(req, "/index.html");
 }
 
+// Screenshot handler
+static esp_err_t handle_screenshot(httpd_req_t *req) {
+    lv_disp_t *disp = lv_disp_get_default();
+    if (!disp || !disp->driver || !disp->driver->draw_buf || !disp->driver->draw_buf->buf1) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "No framebuffer");
+        return ESP_FAIL;
+    }
+    size_t width = disp->driver->hor_res;
+    size_t height = disp->driver->ver_res;
+    size_t bpp = sizeof(lv_color_t); // usually 2 (RGB565)
+    size_t buf_size = width * height * bpp;
+    httpd_resp_set_type(req, "application/octet-stream");
+    httpd_resp_send(req, (const char*)disp->driver->draw_buf->buf1, buf_size);
+    return ESP_OK;
+}
+
 // Start the HTTP configuration server
 esp_err_t config_server_start(void) {
     mount_spiffs();
@@ -306,6 +323,9 @@ esp_err_t config_server_start(void) {
     httpd_register_uri_handler(server, &uri_ncsi);
 
     // Now register the catch-all static handler LAST
+    httpd_uri_t uri_screenshot = { .uri = "/screenshot", .method = HTTP_GET, .handler = handle_screenshot };
+    httpd_register_uri_handler(server, &uri_screenshot);
+
     httpd_uri_t uri_static = { .uri = "/*",  .method = HTTP_GET,  .handler = handle_static };
     httpd_register_uri_handler(server, &uri_static);
 
