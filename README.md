@@ -53,10 +53,11 @@ Below are screenshots of the device UI, showing both the Live tab and various In
 
 ## Hardware Requirements
 
-- **ESP32-S3** development board with PSRAM (≥8 MB recommended)
-- **JC3248W535** capacitive touch display module (320×480) from GuitIon
-- Power supply: 5 V USB or battery with stabilizer
-
+<p align="center">
+  <img src="docs/images/guition.webp" alt="AES Key Configuration Captive Portal" width="600" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Guition JC3248W535 3.5"</b> ESP32-S3 capacitive touch display module (320×480)
+</p>
 ---
 
 ## Project Structure
