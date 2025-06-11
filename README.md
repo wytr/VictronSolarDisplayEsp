@@ -3,7 +3,35 @@
 An ESP32-S3-based solar panel monitor that displays real-time data from a Victron BLE panel using LVGL, and includes a built-in Wi‑Fi AP configuration server to set the AES encryption key via a user-friendly web interface or directly on the device.
 
 ---
+## Screenshots
 
+Below are screenshots of the device UI, showing both the Live tab and various Info tab configuration screens:
+
+<p align="center">
+  <img src="docs/images/victrondata.png" alt="Live Tab: Victron Data Overview" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Live Tab:</b> Shows real-time Victron data including battery voltage, current, load, solar yield, and system state.
+</p>
+
+<p align="center">
+  <img src="docs/images/ap-config.png" alt="Info Tab: AP Config" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Info Tab – AP Config:</b> Configure the Wi-Fi AP SSID, password, and enable/disable the access point.
+</p>
+
+<p align="center">
+  <img src="docs/images/screensaver.png" alt="Info Tab: Screensaver Settings" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Info Tab – Screensaver:</b> Adjust screensaver enable, brightness, and timeout settings.
+</p>
+
+<p align="center">
+  <img src="docs/images/mac-and-aes.png" alt="Info Tab: MAC and AES Key" width="260" style="margin: 0 12px; display: inline-block;"/>
+  <br/>
+  <b>Info Tab – MAC & AES Key:</b> View and edit the AES key and see the current BLE MAC address. Save or reboot from here.
+</p>
+
+---
 ## Features
 
 - **BLE Decryption & Display**
@@ -86,36 +114,6 @@ VictronSolarDisplayEsp/
    - You can also browse to [http://192.168.4.1/](http://192.168.4.1/) to configure the AES key via web UI.
    - Alternatively, use the Info tab on the device to enter and save the AES key.
    - After saving, the device reboots and begins displaying live BLE data.
-
----
-
-## Screenshots
-
-Below are screenshots of the device UI, showing both the Live tab and various Info tab configuration screens:
-
-<p align="center">
-  <img src="docs/images/victrondata.png" alt="Live Tab: Victron Data Overview" width="260" style="margin: 0 12px; display: inline-block;"/>
-  <br/>
-  <b>Live Tab:</b> Shows real-time Victron data including battery voltage, current, load, solar yield, and system state.
-</p>
-
-<p align="center">
-  <img src="docs/images/ap-config.png" alt="Info Tab: AP Config" width="260" style="margin: 0 12px; display: inline-block;"/>
-  <br/>
-  <b>Info Tab – AP Config:</b> Configure the Wi-Fi AP SSID, password, and enable/disable the access point.
-</p>
-
-<p align="center">
-  <img src="docs/images/screensaver.png" alt="Info Tab: Screensaver Settings" width="260" style="margin: 0 12px; display: inline-block;"/>
-  <br/>
-  <b>Info Tab – Screensaver:</b> Adjust screensaver enable, brightness, and timeout settings.
-</p>
-
-<p align="center">
-  <img src="docs/images/mac-and-aes.png" alt="Info Tab: MAC and AES Key" width="260" style="margin: 0 12px; display: inline-block;"/>
-  <br/>
-  <b>Info Tab – MAC & AES Key:</b> View and edit the AES key and see the current BLE MAC address. Save or reboot from here.
-</p>
 
 ---
 
