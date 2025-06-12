@@ -1,6 +1,6 @@
 # VictronSolarDisplayEsp
 
-An ESP32-S3-based solar panel monitor that displays real-time data of a Victron SmartSolar devices using LVGL, and includes a built-in Wi‑Fi AP configuration server to set the AES encryption key via a user-friendly web interface or directly on the device.
+An ESP32-S3-based solar panel monitor that displays real-time data from a Victron BLE panel using LVGL, and includes a built-in Wi‑Fi AP configuration server to set the AES encryption key via a user-friendly web interface or directly on the device.
 
 **Works with Victron SmartSolar devices that have Bluetooth, including SmartSolar MPPT 75/10, 75/15, 100/15, and 100/20 solar chargers.**
 
@@ -38,7 +38,7 @@ Below are screenshots of the device UI, showing both the Live tab and various In
 
 - **BLE Decryption & Display**
   - Scans Victron BLE advertisements, decrypts them with a user-configurable 128‑bit AES key, and parses output voltage, current, solar input, and yield.
-  - Displays live data on a 320x480 (rotated) LCD using LVGL and custom UI themes.
+  - Displays live data on a 320x480 (rotated) LCD using LVGL (Default Dark-Theme).
   - Shows device state and error codes with icons and text.
   - Displays the MAC address of the currently connected Victron BLE device.
 
