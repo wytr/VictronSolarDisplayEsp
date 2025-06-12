@@ -190,6 +190,28 @@ After saving the key, the device will reboot and begin displaying live data.
 
 ---
 
+## Victron BLE Manufacturer Data Support (Planned Improvements)
+
+This project currently supports parsing and decrypting Victron BLE advertisements for record type 0x01 (Panel data). The Victron BLE protocol, as described in the official documentation (see [`docs/extra-manufacturer-data-2022-12-14.pdf`](docs/extra-manufacturer-data-2022-12-14.pdf)), defines several record types with different encrypted payloads:
+
+| Record Type | Description         | Encrypted Data Length | Supported in Firmware? |
+|-------------|---------------------|----------------------|------------------------|
+| 0x01        | Panel               | 21                   | Yes                    |
+| 0x02        | BMS                 | 21                   | Planned                |
+| 0x03        | Inverter            | 21                   | Planned                |
+| 0x04        | Charger             | 21                   | Planned                |
+| 0x05        | VE.Direct LoRaWAN   | 13                   | Planned                |
+
+**Planned future improvements:**
+- Support for parsing and decrypting all Victron BLE record types (BMS, Inverter, Charger, VE.Direct LoRaWAN, etc.)
+- Dynamic handling of encrypted data length and payload struct based on record type
+- Proper struct definitions and parsing for each decrypted payload type
+- Extensible callback or dispatch mechanism for different record types
+
+If you are interested in contributing or need support for a specific record type, please open an issue or pull request!
+
+---
+
 ## License
 
 This project is released under the MIT License. See `LICENSE` for details.
