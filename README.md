@@ -214,4 +214,4 @@ If you are interested in contributing or need support for a specific record type
 
 ## License
 
-This project is released under the MIT License. See `LICENSE` for details.
+This project is released under the GNU General Public License v3.0 (GPLv3). See `LICENSE` for details.
