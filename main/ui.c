@@ -332,13 +332,13 @@ void ui_init(void) {
     lv_obj_align(cb_screensaver, LV_ALIGN_TOP_LEFT, 8, 600);
     lv_obj_add_event_cb(cb_screensaver, cb_screensaver_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_style(cb_screensaver, &style_medium,0);
+
     // Screensaver Brightness Slider
     lv_obj_t *lbl_ss_brightness = lv_label_create(tab_info);
     lv_obj_add_style(lbl_ss_brightness, &style_title, 0);
     lv_label_set_text(lbl_ss_brightness, "Screensaver Brightness:");
     lv_obj_align(lbl_ss_brightness, LV_ALIGN_TOP_LEFT, 8, 650);
     
-
     slider_ss_brightness = lv_slider_create(tab_info);
     lv_obj_set_width(slider_ss_brightness, lv_pct(80));
     lv_obj_align(slider_ss_brightness, LV_ALIGN_TOP_LEFT, 8, 680);

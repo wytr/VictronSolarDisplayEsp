@@ -18,7 +18,7 @@
 static const char *TAG = "VICTRON_LVGL_APP";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
 #define LVGL_PORT_ROTATION_DEGREE 90
-#define REBOOT_INTERVAL_US (24ULL * 60 * 60 * 1000000) // 24 hours in microseconds
+#define REBOOT_INTERVAL_US (12ULL * 60 * 60 * 1000000) // 12 hours in microseconds
 // --- 24h reboot timer callback ---
 static void reboot_timer_cb(void* arg) {
     ESP_LOGI(TAG, "Rebooting after 24h uptime (timer)...");
