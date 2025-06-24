@@ -1,4 +1,3 @@
-
 /* main.c */
 #include <stdio.h>
 #include <inttypes.h>
@@ -14,11 +13,17 @@
 #include "esp_heap_caps.h"
 #include "ui.h"
 #include "config_server.h"
-
+#include "esp_timer.h"
 
 static const char *TAG = "VICTRON_LVGL_APP";
 #define logSection(section) ESP_LOGI(TAG, "\n\n***** %s *****\n", section)
 #define LVGL_PORT_ROTATION_DEGREE 90
+#define REBOOT_INTERVAL_US (24ULL * 60 * 60 * 1000000) // 24 hours in microseconds
+// --- 24h reboot timer callback ---
+static void reboot_timer_cb(void* arg) {
+    ESP_LOGI(TAG, "Rebooting after 24h uptime (timer)...");
+    esp_restart();
+}
 
 void setup(void);
 
@@ -84,6 +89,17 @@ void setup(void) {
     /* --- Register BLE callback and start BLE --- */
     victron_ble_register_callback(ui_on_panel_data);
     victron_ble_init();
+
+    /* --- Setup 24h reboot timer --- */
+    static esp_timer_handle_t reboot_timer;
+    const esp_timer_create_args_t reboot_timer_args = {
+        .callback = &reboot_timer_cb,
+        .arg = NULL,
+        .dispatch_method = ESP_TIMER_TASK,
+        .name = "24h_reboot"
+    };
+    esp_timer_create(&reboot_timer_args, &reboot_timer);
+    esp_timer_start_periodic(reboot_timer, REBOOT_INTERVAL_US);
 
     /* --- Setup complete --- */
     logSection("Setup complete");

@@ -10,6 +10,8 @@
 #include "host/ble_hs.h"
 #include "aes/esp_aes.h"
 
+
+
 static const char *TAG = "victron_ble";
 // AES key buffer (loaded from NVS or default)
 static uint8_t aes_key[16];
@@ -126,8 +128,6 @@ static int ble_gap_event_handler(struct ble_gap_event *event, void *arg) {
     memcpy(&panel, output, sizeof(panel));
     if ((panel.outputCurrentHi & 0xFE) != 0xFE) return 0;
 
-    // Add this: call a UI function to set the MAC address
-    extern void ui_set_ble_mac(const uint8_t *mac); // Declare at top or in a header
     ui_set_ble_mac(event->disc.addr.val);
 
     if (data_cb) data_cb(&panel);

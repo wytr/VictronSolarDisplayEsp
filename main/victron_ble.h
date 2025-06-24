@@ -21,6 +21,7 @@ typedef struct {
     uint8_t  unused[4];
 } victronPanelData_t;
 
+extern void ui_set_ble_mac(const uint8_t *mac);
 // Callback for receiving new panel data
 typedef void (*victron_data_cb_t)(const victronPanelData_t* data);
 
