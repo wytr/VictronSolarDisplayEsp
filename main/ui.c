@@ -25,7 +25,7 @@ static const char *TAG_UI = "UI_MODULE";
 
 // LVGL objects & styles
 static lv_obj_t *tabview, *tab_live, *tab_info, *kb;
-static lv_style_t style_title, style_val, style_big;
+static lv_style_t style_title, style_val, style_big, style_medium;
 static lv_obj_t *lbl_battV, *lbl_battA, *lbl_loadA;
 static lv_obj_t *lbl_solar, *lbl_yield, *lbl_state, *lbl_error;
 static lv_obj_t *solar_symbol, *bolt_symbol;
@@ -121,6 +121,10 @@ void ui_init(void) {
     lv_style_set_text_font(&style_title, &lv_font_montserrat_16);
     lv_style_set_text_color(&style_title, lv_color_white());
 
+    lv_style_init(&style_medium);
+    lv_style_set_text_font(&style_medium, &lv_font_montserrat_24);
+    lv_style_set_text_color(&style_medium, lv_color_white());
+
     lv_style_init(&style_big);
     lv_style_set_text_font(&style_big, &lv_font_montserrat_40);
     lv_style_set_text_color(&style_big, lv_color_white());
@@ -195,13 +199,13 @@ void ui_init(void) {
     lv_obj_t *lbl_ssid = lv_label_create(tab_info);
     lv_obj_add_style(lbl_ssid, &style_title, 0);
     lv_label_set_text(lbl_ssid, "AP SSID:");
-    lv_obj_align(lbl_ssid, LV_ALIGN_TOP_LEFT, 8, 20);
+    lv_obj_align(lbl_ssid, LV_ALIGN_TOP_LEFT, 8, 15);
 
     ta_ssid = lv_textarea_create(tab_info);
     lv_textarea_set_one_line(ta_ssid, true);
     lv_obj_set_width(ta_ssid, lv_pct(80));
     lv_textarea_set_text(ta_ssid, default_ssid);
-    lv_obj_align(ta_ssid, LV_ALIGN_TOP_LEFT, 8, 50);
+    lv_obj_align(ta_ssid, LV_ALIGN_TOP_LEFT, 8, 45);
     lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_FOCUSED, NULL);
     lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_DEFOCUSED, NULL);
     lv_obj_add_event_cb(ta_ssid, ta_event_cb, LV_EVENT_CANCEL, NULL);
@@ -229,14 +233,15 @@ void ui_init(void) {
     // Enable AP checkbox
     cb_ap_enable = lv_checkbox_create(tab_info);
     lv_checkbox_set_text(cb_ap_enable, "Enable AP");
+    lv_obj_add_style(cb_ap_enable, &style_medium,0);
     if (ap_enabled) lv_obj_add_state(cb_ap_enable, LV_STATE_CHECKED);
-    lv_obj_align(cb_ap_enable, LV_ALIGN_TOP_LEFT, 8, 170);
+    lv_obj_align(cb_ap_enable, LV_ALIGN_TOP_LEFT, 8, 180);
 
     // Info tab: error, MAC, AES Key
     lbl_error = lv_label_create(tab_info);
     lv_obj_add_style(lbl_error, &style_title, 0);
     lv_label_set_text(lbl_error, "Err: 0");
-    lv_obj_align(lbl_error, LV_ALIGN_TOP_LEFT, 8, 210);
+    lv_obj_align(lbl_error, LV_ALIGN_TOP_LEFT, 400, 180);
 
     lv_obj_t *lmac = lv_label_create(tab_info);
     lv_obj_add_style(lmac, &style_title, 0);
@@ -311,7 +316,7 @@ void ui_init(void) {
     lv_slider_set_value(slider, brightness, LV_ANIM_OFF); // set loaded value
     bsp_display_brightness_set(brightness); // set display brightness
     lv_obj_add_event_cb(slider, brightness_slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-
+    lv_obj_add_style(slider,&style_medium,0);
     // Add extra space at the bottom
     lv_obj_t *spacer = lv_obj_create(tab_info);
     lv_obj_set_size(spacer, 10, 40);
@@ -326,12 +331,13 @@ void ui_init(void) {
     if (screensaver_enabled) lv_obj_add_state(cb_screensaver, LV_STATE_CHECKED); // reflect default
     lv_obj_align(cb_screensaver, LV_ALIGN_TOP_LEFT, 8, 600);
     lv_obj_add_event_cb(cb_screensaver, cb_screensaver_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-
+    lv_obj_add_style(cb_screensaver, &style_medium,0);
     // Screensaver Brightness Slider
     lv_obj_t *lbl_ss_brightness = lv_label_create(tab_info);
     lv_obj_add_style(lbl_ss_brightness, &style_title, 0);
     lv_label_set_text(lbl_ss_brightness, "Screensaver Brightness:");
     lv_obj_align(lbl_ss_brightness, LV_ALIGN_TOP_LEFT, 8, 650);
+    
 
     slider_ss_brightness = lv_slider_create(tab_info);
     lv_obj_set_width(slider_ss_brightness, lv_pct(80));
@@ -339,6 +345,7 @@ void ui_init(void) {
     lv_slider_set_range(slider_ss_brightness, 1, 100);
     lv_slider_set_value(slider_ss_brightness, screensaver_brightness, LV_ANIM_OFF);
     lv_obj_add_event_cb(slider_ss_brightness, slider_ss_brightness_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_add_style(slider_ss_brightness,&style_medium,0);
 
     // Screensaver Timeout Spinbox
     lv_obj_t *lbl_ss_time = lv_label_create(tab_info);
@@ -652,5 +659,3 @@ static void spinbox_ss_time_decrement_event_cb(lv_event_t *e) {
 static void tabview_touch_event_cb(lv_event_t *e) {
     screensaver_wake();
 }
-
-
