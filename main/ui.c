@@ -30,6 +30,7 @@ static lv_obj_t *lbl_battV, *lbl_battA, *lbl_loadA;
 static lv_obj_t *lbl_solar, *lbl_yield, *lbl_state, *lbl_error;
 static lv_obj_t *solar_symbol, *bolt_symbol;
 static lv_obj_t *ta_mac, *ta_key, *lbl_load_watt;
+static lv_obj_t *spinner; // Spinner for Live tab
 
 // Global brightness variable
 uint8_t brightness = 100;
@@ -163,6 +164,11 @@ void ui_init(void) {
     NEW_BOX("Batt V", "0.00 V", &lbl_battV);
     NEW_BOX("Batt A", "0.0 A",  &lbl_battA);
     NEW_BOX("Load A", "0.0 A", &lbl_loadA);
+
+    // --- Spinner in center of Live tab ---
+    spinner = lv_spinner_create(tab_live, 1000, 60); // 1s, 60deg/step
+    lv_obj_set_size(spinner, 40, 40);
+    lv_obj_align(spinner, LV_ALIGN_CENTER, 0, 0);
 
     lbl_state = lv_label_create(tab_live);
     lv_obj_add_style(lbl_state, &style_big, 0);
@@ -400,6 +406,8 @@ void ui_init(void) {
 }
 
 void ui_on_panel_data(const victronPanelData_t *d) {
+    lvgl_port_lock(0);
+
     int battVraw = d->batteryVoltage;
     int battV_i  = battVraw / 100;
     int battV_f  = battVraw % 100;
@@ -424,6 +432,8 @@ void ui_on_panel_data(const victronPanelData_t *d) {
     lv_label_set_text_fmt(lbl_state, "%s", charger_state_str(d->deviceState));
     lv_label_set_text_fmt(lbl_error, "%s", err_str(d->errorCode));
     lv_label_set_text_fmt(lbl_load_watt, "%lu W", loadWatt);
+
+    lvgl_port_unlock();
 }
 
 static const char *err_str(uint8_t e) {
