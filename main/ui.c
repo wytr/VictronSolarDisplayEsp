@@ -590,7 +590,9 @@ void ui_set_ble_mac(const uint8_t *mac) {
     snprintf(mac_str, sizeof(mac_str),
              "%02X:%02X:%02X:%02X:%02X:%02X",
              mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
+    lvgl_port_lock(0);
     lv_textarea_set_text(ta_mac, mac_str);
+    lvgl_port_unlock();
 }
 
 // --- Screensaver logic ---
