@@ -100,7 +100,7 @@ VictronSolarDisplayEsp/
    └─ ui/                   # Modular UI components (views, helpers)
       ├─ view_solar.c       # Solar charger layout & update logic
       ├─ view_battery.c     # Battery monitor layout & update logic
-      ├─ view_registry.c    # Factory registry for victron_device_type_t
+      ├─ view_registry.c    # Factory registry for victron_record_type_t
       ├─ settings_panel.c   # Settings-tab widgets and event handlers
       ├─ ui_state.h         # Shared UI state struct
       └─ ui_format.c        # Common label formatting helpers
@@ -116,7 +116,7 @@ VictronSolarDisplayEsp/
 The UI is now modular: each device view lives in `main/ui/` and is registered by type. To plug in a new Victron payload, follow these steps:
 
 1. **Update BLE Parsing**
-   - Extend `victron_ble.c` to decode the new record type into `victron_data_t`. Add any required structs to `victron_ble.h` and assign a unique `victron_device_type_t` enum value.
+   - Extend `victron_ble.c` to decode the new record type into `victron_data_t`. Add any required structs to `victron_ble.h` and assign a unique `victron_record_type_t` enum value.
 
 2. **Implement the View Module**
    - Create `main/ui/view_<device>.c` with a `ui_device_view_t` implementation (see `view_solar.c` or `view_battery.c` for patterns).
@@ -125,7 +125,7 @@ The UI is now modular: each device view lives in `main/ui/` and is registered by
      - Provide `show()`/`hide()` for visibility toggling; `destroy()` only if you allocate additional resources.
 
 3. **Register the View**
-   - Add an entry to `main/ui/view_registry.c` mapping your new `victron_device_type_t` to the module’s factory function and display name.
+   - Add an entry to `main/ui/view_registry.c` mapping your new `victron_record_type_t` to the module’s factory function and display name.
    - If the device should appear with a specific label in the Settings tab, also update `ui_settings_panel_init()` as needed.
 
 4. **Expose Shared State**
@@ -240,7 +240,46 @@ On first boot (or after a reset), the device creates a Wi-Fi access point (`Vict
 After saving the key, the device will reboot and begin displaying live data.
 
 ---
+## Hardware Build Guide
 
+Assembly notes and 3D printed enclosure contributed by [NomadicNico](https://github.com/NomadicNico) – thank you!
+
+### Bill of Materials
+
+- 3D printed enclosure: [Guition JC3248W535 3.5" Surface Mount Case](https://www.printables.com/model/1442589-guition-jc3248w535-35-surface-mount-case)
+- 4‑pole 1.25 mm connector with pre-crimped leads: [Elechawk PicoBlade-compatible cable set](https://www.amazon.de/dp/B07S18D3RN)
+- DC buck converter:
+  - Adjustable: [TECNOIOT Mini-360 DC-DC Step Down](https://www.amazon.de/-/en/TECNOIOT-Mini360-Mini-360-Adjustable-Converter/dp/B07G4FM6ZW)
+  - Fixed 5 V: [LAOMAO Mini 560 Step Down](https://www.amazon.de/-/en/Converter-Voltage-LAOMAO-Output-Modules/dp/B0B92ZDK6T)
+- Hook-up wire, heat-shrink tubing, and double-sided mounting tape (e.g. 3M VHB)
+
+### Wiring & Assembly
+
+1. **Prepare the connector harness.** Insert red and black pre-crimped leads into the 4-pole plug and trim to ~50 mm.  
+   ![Pre-crimped harness](docs/images/precrimped.png)
+
+2. **Solder the 5 V output.** Slide heat-shrink onto each lead, solder the red wire to Vout+ and black wire to Vout− on the buck converter, then shrink for strain relief.  
+   ![Buck output soldering](docs/images/soldered-buck.png)
+
+3. **Set the input wiring.** Add leads to Vin+ and Vin−, insulate with heat-shrink, and (for adjustable modules) dial the output to exactly 5 V before connecting the display.
+
+4. **Enclose the converter.** Wrap the buck converter with heat-shrink so no metal is exposed and ready it for mounting.
+
+5. **Mount the display.** Install the display into the printed case.  
+   ![Display assembled in printed case](docs/images/display-3d-print.png)
+
+6. **Route power and secure the buck.** Plug in the 4-pole connector, position the buck converter centrally over the wall bracket cut-out, and secure it with mounting tape.  
+   ![Buck positioned and connected](docs/images/display-connect-buck.png)
+
+7. **Install the wall bracket.** Fix the bracket in the desired location (example: Hymer instrument panel using the supplied adapter plate).  
+   ![Mounted display in Hymer instrument panel](docs/images/display-mount-hymer.png)
+
+8. **Provide 12 V supply.** Run the Vin leads through the mounting hole and tie into a fused 12 V source.
+
+9. **Attach the display.** Press the display onto the bracket until it clicks. To remove it later, pull firmly or lever the side tabs via the case slots.  
+   ![Finished installation showcase](docs/images/display-mount-hymer-showcase.png)
+
+---
 ## Victron BLE Manufacturer Data Support (Planned Improvements)
 
 This project currently supports parsing and decrypting Victron BLE advertisements for record types 0x01 (Solar Charger) and 0x02 (Battery Monitor). The Victron BLE protocol, as described in the official documentation (see [`docs/extra-manufacturer-data-2022-12-14.pdf`](docs/extra-manufacturer-data-2022-12-14.pdf)), defines several record types with different encrypted payloads:

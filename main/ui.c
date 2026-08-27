@@ -8,6 +8,7 @@
 #include "lv_port.h"
 #include "esp_log.h"
 #include "victron_ble.h"
+#include "victron_products.h"
 #include "nvs_flash.h"
 #include "config_storage.h"
 #include <stdio.h>
@@ -25,7 +26,8 @@ static const char *TAG_UI = "UI_MODULE";
 
 static ui_state_t g_ui = {
     .brightness = 100,
-    .current_device_type = VICTRON_DEVICE_TYPE_UNKNOWN,
+    .current_device_type = VICTRON_BLE_RECORD_TEST,
+    .current_product_id = 0,
     .has_received_data = false,
     .tab_settings_index = UINT16_MAX,
     .tab_relay_index = UINT16_MAX,
@@ -34,8 +36,8 @@ static ui_state_t g_ui = {
 
 // Forward declarations
 static void tabview_touch_event_cb(lv_event_t *e);
-static void ensure_device_layout(ui_state_t *ui, victron_device_type_t type);
-static const char *device_type_name(victron_device_type_t type);
+static void ensure_device_layout(ui_state_t *ui, victron_record_type_t type);
+static const char *device_type_name(victron_record_type_t type);
 
 static bool obj_is_descendant(const lv_obj_t *obj, const lv_obj_t *parent)
 {
@@ -59,7 +61,7 @@ void ui_init(void) {
     load_brightness(&ui->brightness);
 
     ui->active_view = NULL;
-    ui->current_device_type = VICTRON_DEVICE_TYPE_UNKNOWN;
+    ui->current_device_type = VICTRON_BLE_RECORD_TEST;
     for (size_t i = 0; i < UI_MAX_DEVICE_VIEWS; ++i) {
         ui->views[i] = NULL;
     }
@@ -246,12 +248,31 @@ void ui_on_panel_data(const victron_data_t *d) {
         lv_label_set_text_fmt(ui->lbl_device_type, "Device: %s", type_str);
     }
 
+    ui->current_product_id = d->product_id;
+    if (ui->lbl_product_name) {
+        if (d->product_id != 0) {
+            const char *prod_name = victron_product_name(d->product_id);
+            if (prod_name != NULL) {
+                lv_label_set_text_fmt(ui->lbl_product_name,
+                                      "Product: %s (0x%04X)",
+                                      prod_name,
+                                      (unsigned)d->product_id);
+            } else {
+                lv_label_set_text_fmt(ui->lbl_product_name,
+                                      "Product: 0x%04X",
+                                      (unsigned)d->product_id);
+            }
+        } else {
+            lv_label_set_text(ui->lbl_product_name, "Product: --");
+        }
+    }
+
     ensure_device_layout(ui, d->type);
 
     if (ui->active_view && ui->active_view->update) {
         ui->active_view->update(ui->active_view, d);
     } else if (ui->lbl_error) {
-        if (d->type == VICTRON_DEVICE_TYPE_UNKNOWN) {
+        if (d->type == VICTRON_BLE_RECORD_TEST) {
             lv_label_set_text(ui->lbl_error, "Unknown device type");
         } else {
             lv_label_set_text(ui->lbl_error, "No renderer for device type");
@@ -279,7 +300,7 @@ void ui_set_ble_mac(const uint8_t *mac) {
     lvgl_port_unlock();
 }
 
-static void ensure_device_layout(ui_state_t *ui, victron_device_type_t type)
+static void ensure_device_layout(ui_state_t *ui, victron_record_type_t type)
 {
     if (ui == NULL) {
         return;
@@ -299,14 +320,14 @@ static void ensure_device_layout(ui_state_t *ui, victron_device_type_t type)
     if (view && view->show) {
         view->show(view);
         ui->active_view = view;
-    } else if (type != VICTRON_DEVICE_TYPE_UNKNOWN) {
+    } else if (type != VICTRON_BLE_RECORD_TEST) {
         ESP_LOGW(TAG_UI, "No view available for device type 0x%02X", (unsigned)type);
     }
 
     ui->current_device_type = type;
 }
 
-static const char *device_type_name(victron_device_type_t type)
+static const char *device_type_name(victron_record_type_t type)
 {
     return ui_view_registry_name(type);
 }

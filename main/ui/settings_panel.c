@@ -342,6 +342,10 @@ static void create_system_settings_page(ui_state_t *ui, lv_obj_t *page_system)
     lv_obj_add_style(ui->lbl_device_type, &ui->styles.small, 0);
     lv_label_set_text(ui->lbl_device_type, "Device: --");
 
+    ui->lbl_product_name = lv_label_create(sys_container);
+    lv_obj_add_style(ui->lbl_product_name, &ui->styles.small, 0);
+    lv_label_set_text(ui->lbl_product_name, "Product: --");
+
     ui->lbl_error = lv_label_create(sys_container);
     lv_obj_add_style(ui->lbl_error, &ui->styles.small, 0);
     lv_label_set_text(ui->lbl_error, "Err: 0");
@@ -401,6 +405,7 @@ static void create_system_settings_page(ui_state_t *ui, lv_obj_t *page_system)
     lv_label_set_text(lbl_save, "Save");
     lv_obj_center(lbl_save);
     lv_obj_add_event_cb(btn_save_key, save_key_btn_event_cb, LV_EVENT_CLICKED, ui);
+    lv_obj_add_style(btn_save_key, &ui->styles.small, 0);
 
     /* Reboot Button */
     lv_obj_t *btn_reboot = lv_btn_create(btn_row);
@@ -409,6 +414,7 @@ static void create_system_settings_page(ui_state_t *ui, lv_obj_t *page_system)
     lv_label_set_text(lbl_reboot, "Reboot");
     lv_obj_center(lbl_reboot);
     lv_obj_add_event_cb(btn_reboot, reboot_btn_event_cb, LV_EVENT_CLICKED, ui);
+    lv_obj_add_style(btn_reboot, &ui->styles.small, 0);
 
     /* --- Victron Debug Checkbox --- */
     ui->victron_debug_checkbox = lv_checkbox_create(sys_container);
@@ -1027,68 +1033,34 @@ static void relay_dropdown_event_cb(lv_event_t *e)
 
 static void relay_config_refresh_dropdowns(ui_state_t *ui)
 {
-    if (ui == NULL) {
-        return;
-    }
-
-    if (ui->relay_config.dropdown_updating) {
-        return;
-    }
-
+    if (!ui || ui->relay_config.dropdown_updating) return;
     ui->relay_config.dropdown_updating = true;
 
     for (size_t i = 0; i < ui->relay_config.count; ++i) {
         lv_obj_t *dropdown = ui->relay_config.dropdowns[i];
-        if (dropdown == NULL) {
-            continue;
-        }
+        if (!dropdown) continue;
 
         char options[256] = "";
-        uint8_t option_pins[UI_MAX_RELAY_BUTTONS] = {0};
-        size_t option_count = 0;
         uint8_t current_pin = ui->relay_config.gpio_pins[i];
 
         if (current_pin != UI_RELAY_GPIO_UNASSIGNED) {
             relay_config_append_gpio_option(options, sizeof(options), current_pin);
-            option_pins[option_count++] = current_pin;
         }
-
-        for (size_t choice = 0; choice < RELAY_GPIO_COUNT; ++choice) {
-            uint8_t candidate = RELAY_GPIO_CHOICES[choice];
-            if (candidate == current_pin) {
-                continue;
-            }
-            if (relay_config_pin_in_use(ui, candidate, i)) {
-                continue;
-            }
+        for (size_t j = 0; j < RELAY_GPIO_COUNT; ++j) {
+            uint8_t candidate = RELAY_GPIO_CHOICES[j];
+            if (candidate == current_pin || relay_config_pin_in_use(ui, candidate, i)) continue;
             relay_config_append_gpio_option(options, sizeof(options), candidate);
-            if (option_count < UI_MAX_RELAY_BUTTONS) {
-                option_pins[option_count] = candidate;
-            }
-            option_count++;
         }
 
-        if (option_count == 0) {
-            relay_config_append_option(options, sizeof(options), "None");
+        const char *old_opts = lv_dropdown_get_options(dropdown);
+        if (!old_opts || strcmp(old_opts, options) != 0) {
             lv_dropdown_set_options(dropdown, options);
-            lv_dropdown_set_selected(dropdown, 0);
-            ui->relay_config.gpio_pins[i] = UI_RELAY_GPIO_UNASSIGNED;
-            ui->relay_button_state[i] = false;
-            continue;
         }
-
-        lv_dropdown_set_options(dropdown, options);
-
-        size_t selected_idx = 0;
-        if (current_pin == UI_RELAY_GPIO_UNASSIGNED) {
-            ui->relay_config.gpio_pins[i] = option_pins[0];
-            ui->relay_button_state[i] = false;
-        }
-        lv_dropdown_set_selected(dropdown, selected_idx);
     }
 
     ui->relay_config.dropdown_updating = false;
 }
+
 
 static void relay_config_update_controls(ui_state_t *ui)
 {
@@ -1169,6 +1141,7 @@ static void relay_config_create_row(ui_state_t *ui, size_t index)
 
     /* Add a textarea for an optional custom label */
     lv_obj_t *ta = lv_textarea_create(row);
+    lv_textarea_set_max_length(ta, 20);
     lv_obj_set_width(ta, 160);
     lv_textarea_set_one_line(ta, true);
     lv_textarea_set_placeholder_text(ta, "Label (optional)");

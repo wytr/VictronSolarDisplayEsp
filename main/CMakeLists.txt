@@ -4,6 +4,8 @@ idf_component_register(
     SRCS       ${SOURCES}
     INCLUDE_DIRS "."
     PRIV_REQUIRES
+        config_storage
+        victron_ble
         dns_server
         esp_netif 
         lvgl
@@ -11,7 +13,6 @@ idf_component_register(
         spi_flash
         nvs_flash
         bt
-        mbedtls
         spiffs
         esp_netif          # <— for TCP/IP interfaces
         esp_event          # <— for Wi-Fi & netif events

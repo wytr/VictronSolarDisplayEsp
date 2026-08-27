@@ -8,7 +8,7 @@
 
 struct ui_device_view;
 
-#define UI_MAX_DEVICE_VIEWS 3
+#define UI_MAX_DEVICE_VIEWS 32
 #define UI_MAX_RELAY_BUTTONS 8
 #define UI_RELAY_GPIO_UNASSIGNED UINT8_MAX
 
@@ -63,13 +63,15 @@ typedef struct ui_state {
     ui_screensaver_state_t screensaver;
     lv_obj_t *lbl_error;
     lv_obj_t *lbl_device_type;
+    lv_obj_t *lbl_product_name;
     lv_obj_t *lbl_no_data;
     lv_obj_t *ta_mac;
     lv_obj_t *ta_key;
     uint8_t brightness;
     bool victron_debug_enabled;
     lv_obj_t *victron_debug_checkbox;
-    victron_device_type_t current_device_type;
+    victron_record_type_t current_device_type;
+    uint16_t current_product_id;
     struct ui_device_view *active_view;
     struct ui_device_view *views[UI_MAX_DEVICE_VIEWS];
     bool has_received_data;
